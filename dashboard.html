@@ -1,130 +1,97 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel - Andrés Raíz</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Intranet Andrés Raíz</title>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { color: #F39200; text-align: center; }
+    button { margin: 10px; padding: 10px 20px; background: #F39200; border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #E07C00; }
+    label, input { display: block; margin: 10px 0; }
+    #login, #dashboard { display: none; }
+    .logo { width: 120px; margin-bottom: 20px; }
+  </style>
 </head>
 <body>
-  <div class="panel">
-    <img src="assets/logo.png" class="logo" alt="Logo"/>
-    <h2>Bienvenido, <span id="nombre"></span></h2>
-
-    <div class="info-box">
-      <p><strong>Cédula:</strong> <span id="cedula"></span></p>
-      <p><strong>Cargo:</strong> <span id="cargo"></span></p>
-      <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
-      <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones"></span> días</p>
-    </div>
-
-    <div class="btn-group">
-      <button onclick="descargarColilla()">Ver colilla de este mes</button>
-      <button onclick="generarCertificado()">Generar certificado laboral</button>
-      <button onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
-
-    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
+  <div class="container" id="login">
+    <img src="assets/logo.png" alt="Logo" class="logo">
+    <h1>Intranet Andrés Raíz</h1>
+    <label for="usuario">Usuario:</label>
+    <input type="text" id="usuario">
+    <label for="clave">Contraseña:</label>
+    <input type="password" id="clave">
+    <button onclick="ingresar()">Ingresar</button>
   </div>
 
-  <script>
-    const empleado = JSON.parse(localStorage.getItem('empleado'));
-    if (!empleado) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById('nombre').innerText = empleado.nombre;
-      document.getElementById('cedula').innerText = empleado.cedula;
-      document.getElementById('cargo').innerText = empleado.cargo;
-      document.getElementById('ingreso').innerText = empleado.ingreso;
-
-      // Cálculo de vacaciones automáticas
-      const fechaIngreso = new Date(empleado.ingreso);
-      const hoy = new Date();
-      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
-      const meses = hoy.getMonth() - fechaIngreso.getMonth();
-      const totalMeses = (años * 12) + meses;
-      const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
-      document.getElementById('vacaciones').innerText = diasVacaciones;
-    }
-
-    function descargarColilla() {
-      const mes = new Date().toISOString().slice(0, 7);
-      const path = `colillas/${empleado.cedula}/${mes}.pdf`;
-      document.getElementById("visor").src = path;
-      document.getElementById("visor").style.display = "block";
-    }
-
-function numeroALetras(valor) {
-  // Conversión básica para los valores que usas
-  if (valor === 1423500) return "UN MILLÓN CUATROCIENTOS VEINTITRÉS MIL QUINIENTOS PESOS COLOMBIANOS";
-  if (valor === 200000) return "DOSCIENTOS MIL PESOS COLOMBIANOS";
-  if (valor === 350000) return "TRESCIENTOS CINCUENTA MIL PESOS COLOMBIANOS";
-  if (valor === 2400000) return "DOS MILLONES CUATROCIENTOS MIL PESOS COLOMBIANOS";
-  return valor + " PESOS";
-}
-
-function generarCertificado() {
-  <script>
-function numeroALetras(valor) {
-  if (valor === 1423500) return "UN MILLÓN CUATROCIENTOS VEINTITRÉS MIL QUINIENTOS PESOS COLOMBIANOS";
-  if (valor === 200000) return "DOSCIENTOS MIL PESOS COLOMBIANOS";
-  if (valor === 350000) return "TRESCIENTOS CINCUENTA MIL PESOS COLOMBIANOS";
-  if (valor === 2400000) return "DOS MILLONES CUATROCIENTOS MIL PESOS COLOMBIANOS";
-  return valor + " PESOS";
-}
-
-function generarCertificado() {
-  const fechaHoy = new Date().toLocaleDateString('es-CO', {
-    day: 'numeric', month: 'long', year: 'numeric'
-  });
-
-  const html = `
-  <div style="width: 750px; margin: 0 auto; font-family: 'Segoe UI', sans-serif; font-size: 15px; color: #000;">
-    <div style="text-align: center; margin-bottom: 20px;">
-      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-bottom: 10px;">
-      <h2 style="margin: 0;">ANDRÉS RAÍZ INMOBILIARIA S.A.S</h2>
-      <p style="margin: 0;">NIT: 901.524.934-1</p>
-    </div>
-
-    <p style="text-align: right;">Sabaneta, ${fechaHoy}</p>
-
-    <h2 style="text-align: center; margin: 30px 0;">A QUIEN PUEDA INTERESAR</h2>
-
-    <p style="text-align: justify;">
-      ANDRÉS RAÍZ INMOBILIARIA S.A.S certifica que el señor <strong>${empleado.nombre}</strong>, identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
-      labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha bajo el cargo de <strong>${empleado.cargo}</strong>,
-      mediante contrato a término indefinido con un salario básico mensual de 
-      ${numeroALetras(empleado.salario)} ($${empleado.salario.toLocaleString("es-CO")}), más auxilio de transporte 
-      ${numeroALetras(empleado.transporte)} ($${empleado.transporte.toLocaleString("es-CO")}),
-      auxilio de rodamiento ${numeroALetras(empleado.rodamiento)} ($${empleado.rodamiento.toLocaleString("es-CO")}), 
-      y comisiones no constitutivas de salario en promedio de 
-      ${numeroALetras(empleado.comisiones)} ($${empleado.comisiones.toLocaleString("es-CO")}).
-    </p>
-
-    <p style="text-align: justify;">
-      Este certificado se expide a solicitud del interesado para los fines que estime convenientes.
-      Para más información puede comunicarse al correo <strong>servicio@andresraiz.com</strong> o a los teléfonos 3588564 y 3245366761.
-    </p>
-
-    <br><br><br>
-    <p style="text-align: center;">______________________________</p>
-    <p style="text-align: center;"><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal Suplente</p>
+  <div class="container" id="dashboard">
+    <h1>Bienvenido <span id="nombreEmpleado"></span></h1>
+    <button onclick="generarColilla()">Ver colilla de pago</button>
+    <button onclick="verVacaciones()">Ver días de vacaciones</button>
+    <button onclick="generarCertificado()">Generar certificado laboral</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
   </div>
-  `;
 
-  const win = window.open('', '_blank');
-  win.document.write(`<html><head><title>Certificado</title></head><body>${html}</body></html>`);
-  win.document.close();
-  win.print();
+<script>
+let empleado = null;
+
+async function ingresar() {
+  const usuario = document.getElementById('usuario').value;
+  const clave = document.getElementById('clave').value;
+  const res = await fetch('empleados.json');
+  const empleados = await res.json();
+  const encontrado = empleados.find(e => e.usuario === usuario && e.clave === clave);
+  if (encontrado) {
+    empleado = encontrado;
+    document.getElementById('nombreEmpleado').innerText = empleado.nombre;
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  } else {
+    alert('Usuario o contraseña incorrectos');
+  }
+}
+
+function cerrarSesion() {
+  empleado = null;
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login').style.display = 'block';
+}
+
+function generarColilla() {
+  const nombreArchivo = `Q13 ${empleado.cedula}.pdf`;
+  window.open(`colillas/${nombreArchivo}`, '_blank');
+}
+
+function verVacaciones() {
+  alert(`Días acumulados de vacaciones: ${empleado.vacaciones}`);
+}
+
+async function generarCertificado() {
+  const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+  const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+  const salarioTexto = "UN MILLÓN CUATROCIENTOS VEINTITRÉS MIL QUINIENTOS PESOS";
+  const existingPdfBytes = await fetch('certificados/certificado_base.pdf').then(res => res.arrayBuffer());
+  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+  const pages = pdfDoc.getPages();
+  const firstPage = pages[0];
+  const { width, height } = firstPage.getSize();
+  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+  firstPage.drawText(nombre, { x: 110, y: height - 250, size: 11, font });
+  firstPage.drawText(cedula, { x: 150, y: height - 270, size: 11, font });
+  firstPage.drawText(cargo, { x: 120, y: height - 290, size: 11, font });
+  firstPage.drawText(ingreso, { x: 150, y: height - 310, size: 11, font });
+  firstPage.drawText(salarioTexto + ` ($${salario.toLocaleString('es-CO')})`, { x: 80, y: height - 330, size: 11, font });
+  firstPage.drawText(fechaHoy, { x: 400, y: height - 180, size: 11, font });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
 }
 </script>
-
-
-
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
-      window.location.href = "index.html";
-    }
-  </script>
 </body>
 </html>
+
