@@ -81,5 +81,77 @@
       window.location.href = "index.html";
     }
   </script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script>
+async function generarCertificado() {
+  const { nombre, cedula, cargo, ingreso } = empleado;
+  const hoy = new Date();
+  const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+  const pages = pdfDoc.getPages();
+  const firstPage = pages[0];
+  const { width, height } = firstPage.getSize();
+
+  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+  // Agregar texto dinámico en posiciones aproximadas (ajustable)
+  firstPage.drawText(nombre, {
+    x: 160,
+    y: height - 245,
+    size: 11,
+    font,
+    color: PDFLib.rgb(0, 0, 0),
+  });
+
+  firstPage.drawText(cedula, {
+    x: 170,
+    y: height - 262,
+    size: 11,
+    font,
+    color: PDFLib.rgb(0, 0, 0),
+  });
+
+  firstPage.drawText(cargo, {
+    x: 175,
+    y: height - 278,
+    size: 11,
+    font,
+    color: PDFLib.rgb(0, 0, 0),
+  });
+
+  firstPage.drawText(ingreso, {
+    x: 235,
+    y: height - 293,
+    size: 11,
+    font,
+    color: PDFLib.rgb(0, 0, 0),
+  });
+
+  firstPage.drawText(fechaActual, {
+    x: 215,
+    y: height - 337,
+    size: 11,
+    font,
+    color: PDFLib.rgb(0, 0, 0),
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+
+  // Mostrar en visor o nueva pestaña
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.style.width = '100%';
+  iframe.style.height = '600px';
+
+  const visor = document.getElementById('visor');
+  visor.innerHTML = '';
+  visor.appendChild(iframe);
+}
+</script>
+
 </body>
 </html>
