@@ -64,48 +64,61 @@ function numeroALetras(valor) {
 }
 
 function generarCertificado() {
+  <script>
+function numeroALetras(valor) {
+  if (valor === 1423500) return "UN MILLÓN CUATROCIENTOS VEINTITRÉS MIL QUINIENTOS PESOS COLOMBIANOS";
+  if (valor === 200000) return "DOSCIENTOS MIL PESOS COLOMBIANOS";
+  if (valor === 350000) return "TRESCIENTOS CINCUENTA MIL PESOS COLOMBIANOS";
+  if (valor === 2400000) return "DOS MILLONES CUATROCIENTOS MIL PESOS COLOMBIANOS";
+  return valor + " PESOS";
+}
+
+function generarCertificado() {
   const fechaHoy = new Date().toLocaleDateString('es-CO', {
     day: 'numeric', month: 'long', year: 'numeric'
   });
 
-  const certHTML = `
-  <div style="max-width:700px; margin:auto; font-family:'Segoe UI', sans-serif; color:#000; font-size:15px; line-height:1.6;">
-    <p style="text-align:right;">Sabaneta, ${fechaHoy}</p>
-    <h2 style="text-align:center; margin-bottom:40px;">A QUIEN PUEDA INTERESAR</h2>
-    
-    <p style="text-align:justify;">
-      ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor <strong>${empleado.nombre}</strong>, identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
-      labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha bajo el cargo de <strong>${empleado.cargo}</strong> mediante un contrato a término indefinido,
-      con un salario básico de:
+  const html = `
+  <div style="width: 750px; margin: 0 auto; font-family: 'Segoe UI', sans-serif; font-size: 15px; color: #000;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-bottom: 10px;">
+      <h2 style="margin: 0;">ANDRÉS RAÍZ INMOBILIARIA S.A.S</h2>
+      <p style="margin: 0;">NIT: 901.524.934-1</p>
+    </div>
+
+    <p style="text-align: right;">Sabaneta, ${fechaHoy}</p>
+
+    <h2 style="text-align: center; margin: 30px 0;">A QUIEN PUEDA INTERESAR</h2>
+
+    <p style="text-align: justify;">
+      ANDRÉS RAÍZ INMOBILIARIA S.A.S certifica que el señor <strong>${empleado.nombre}</strong>, identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
+      labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha bajo el cargo de <strong>${empleado.cargo}</strong>,
+      mediante contrato a término indefinido con un salario básico mensual de 
+      ${numeroALetras(empleado.salario)} ($${empleado.salario.toLocaleString("es-CO")}), más auxilio de transporte 
+      ${numeroALetras(empleado.transporte)} ($${empleado.transporte.toLocaleString("es-CO")}),
+      auxilio de rodamiento ${numeroALetras(empleado.rodamiento)} ($${empleado.rodamiento.toLocaleString("es-CO")}), 
+      y comisiones no constitutivas de salario en promedio de 
+      ${numeroALetras(empleado.comisiones)} ($${empleado.comisiones.toLocaleString("es-CO")}).
     </p>
 
-    <p style="text-align:justify;">
-      ${numeroALetras(empleado.salario)} ($${empleado.salario.toLocaleString("es-CO")}), 
-      con auxilio de transporte equivalente a ${numeroALetras(empleado.transporte)} ($${empleado.transporte.toLocaleString("es-CO")}), 
-      un auxilio de rodamiento de ${numeroALetras(empleado.rodamiento)} ($${empleado.rodamiento.toLocaleString("es-CO")}), 
-      más comisiones no constitutivas de salario con promedio de ${numeroALetras(empleado.comisiones)} ($${empleado.comisiones.toLocaleString("es-CO")}).
-    </p>
-
-    <p style="text-align:justify;">
-      Cualquier información o requerimiento adicional será atendido por medio del correo <strong>servicio@andresraiz.com</strong> o los teléfonos 358 85 64 y 3245366761.
+    <p style="text-align: justify;">
+      Este certificado se expide a solicitud del interesado para los fines que estime convenientes.
+      Para más información puede comunicarse al correo <strong>servicio@andresraiz.com</strong> o a los teléfonos 3588564 y 3245366761.
     </p>
 
     <br><br><br>
-    <p><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal suplente</p>
-    <p>Andrés Raíz Inmobiliaria S.A.S<br>NIT: 901.524.934-1</p>
+    <p style="text-align: center;">______________________________</p>
+    <p style="text-align: center;"><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal Suplente</p>
   </div>
   `;
 
   const win = window.open('', '_blank');
-  win.document.write(`
-    <html>
-      <head><title>Certificado</title></head>
-      <body>${certHTML}</body>
-    </html>
-  `);
+  win.document.write(`<html><head><title>Certificado</title></head><body>${html}</body></html>`);
   win.document.close();
   win.print();
 }
+</script>
+
 
 
     function cerrarSesion() {
