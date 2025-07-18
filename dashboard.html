@@ -48,7 +48,7 @@
 
     function descargarColilla() {
       const mes = new Date().toISOString().slice(0, 7);
-      const path = `colillas/${empleado.cedula}/${mes}.pdf`;
+      const path = colillas/${empleado.cedula}/${mes}.pdf;
       document.getElementById("visor").src = path;
       document.getElementById("visor").style.display = "block";
     }
@@ -57,61 +57,92 @@
       localStorage.removeItem('empleado');
       window.location.href = "index.html";
     }
-  </script>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script>
-  function numeroATexto(valor) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
-  }
 
-  function enLetras(num) {
-    const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-    const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
-    return words;
-  }
+    function numeroATexto(valor) {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+    }
 
-  async function generarCertificado() {
-    const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-    const hoy = new Date();
-    const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+    function enLetras(num) {
+      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+      const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+      return words.toUpperCase() + ' PESOS COLOMBIANOS';
+    }
 
-    const texto = `Sabaneta, ${fechaActual}
+    async function generarCertificado() {
+      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+      const hoy = new Date();
+      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const texto = `Sabaneta, ${fechaActual}
 
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo} mediante un contrato a término indefinido, con un salario básico de:
-
-${enLetras(salario).toUpperCase()} ($${numeroATexto(salario)}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte).toUpperCase()} ($${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} ($${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones).toUpperCase()} ($${numeroATexto(comisiones)})
+${nombre} identificado con cédula de ciudadanía No. ${cedula} labora en
+nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo},
+mediante un contrato a término indefinido, con un salario básico de:
+${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)}).
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
-correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
+correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761.`;
 
-    const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-    const page = pdfDoc.getPages()[0];
-    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+      const page = pdfDoc.getPages()[0];
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-    page.drawText(texto, {
-      x: 50,
-      y: 750,
-      size: 10,
-      font,
-      lineHeight: 14,
-      color: PDFLib.rgb(0, 0, 0),
-      maxWidth: 500,
-    });
+      // Definir márgenes estándar (1 pulgada = 72 puntos en coordenadas PDF)
+      const margin = 72;
+      const pageWidth = page.getWidth();
+      const pageHeight = page.getHeight();
+      const textWidth = pageWidth - 2 * margin;
 
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const visor = document.getElementById('visor');
-    visor.src = url;
-    visor.style.display = 'block';
-  }
+      // Dividir el texto en líneas para un formato adecuado
+      const lines = texto.split('\n');
+      let yPosition = pageHeight - margin;
+
+      lines.forEach((line, index) => {
+        if (line.trim() === '') {
+          yPosition -= 14;
+          return;
+        }
+
+        if (index === 0) {
+          const textWidthLine = font.widthOfTextAtSize(line, 10);
+          page.drawText(line, {
+            x: pageWidth - margin - textWidthLine,
+            y: yPosition,
+            size: 10,
+            font,
+            color: PDFLib.rgb(0, 0, 0),
+          });
+          yPosition -= 28;
+        } else {
+          page.drawText(line, {
+            x: margin,
+            y: yPosition,
+            size: 10,
+            font,
+            lineHeight: 14,
+            color: PDFLib.rgb(0, 0, 0),
+            maxWidth: textWidth,
+            wordBreaks: [' '],
+          });
+          yPosition -= 14;
+        }
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const visor = document.getElementById('visor');
+      visor.src = url;
+      visor.style.display = 'block';
+    }
   </script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 </body>
 </html>
