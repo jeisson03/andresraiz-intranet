@@ -1,120 +1,85 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Intranet Andrés Raíz</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
-    .container { max-width: 700px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1, h2 { color: #F39200; text-align: center; }
-    button { margin: 10px; padding: 10px 20px; background: #F39200; border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; }
-    button:hover { background: #E07C00; }
-    label, input { display: block; margin: 10px 0; width: 100%; }
-    #login, #dashboard { display: none; }
-    .info { text-align: left; margin: 20px 0; line-height: 1.6; }
-    iframe { width: 100%; height: 600px; border: none; margin-top: 20px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel - Andrés Raíz</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container" id="login">
-    <h1>Intranet Andrés Raíz</h1>
-    <label for="usuario">Usuario:</label>
-    <input type="text" id="usuario">
-    <label for="clave">Contraseña:</label>
-    <input type="password" id="clave">
-    <button onclick="ingresar()">Ingresar</button>
-  </div>
+  <div class="panel">
+    <img src="assets/logo.png" class="logo" alt="Logo"/>
+    <h2>Bienvenido, <span id="nombre"></span></h2>
 
-  <div class="container" id="dashboard">
-    <h1>Bienvenido <span id="nombreEmpleado"></span></h1>
-    <div class="info">
-      <strong>Cédula:</strong> <span id="cedulaEmpleado"></span><br>
-      <strong>Cargo:</strong> <span id="cargoEmpleado"></span><br>
-      <strong>Fecha de ingreso:</strong> <span id="ingresoEmpleado"></span><br>
-      <strong>Salario:</strong> $<span id="salarioEmpleado"></span><br>
-      <strong>Transporte:</strong> $<span id="transporteEmpleado"></span><br>
-      <strong>Rodamiento:</strong> $<span id="rodamientoEmpleado"></span><br>
-      <strong>Comisiones:</strong> $<span id="comisionesEmpleado"></span><br>
+    <div class="info-box">
+      <p><strong>Cédula:</strong> <span id="cedula"></span></p>
+      <p><strong>Cargo:</strong> <span id="cargo"></span></p>
+      <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
+      <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones"></span> días</p>
     </div>
-    <button onclick="verColilla()">Ver colilla</button>
-    <button onclick="verVacaciones()">Ver vacaciones</button>
-    <button onclick="generarCertificado()">Generar certificado laboral</button>
-    <button onclick="cerrarSesion()">Cerrar sesión</button>
-    <div id="visor"></div>
+
+    <div class="btn-group">
+      <button onclick="descargarColilla()">Ver colilla de este mes</button>
+      <button onclick="generarCertificado()">Generar certificado laboral</button>
+      <button onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+
+    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
   </div>
 
-<script>
-let empleado = null;
-
-async function ingresar() {
-  const usuario = document.getElementById("usuario").value;
-  const clave = document.getElementById("clave").value;
-  try {
-    const res = await fetch("empleados.json");
-    const empleados = await res.json();
-    const encontrado = empleados.find(e => e.usuario === usuario && e.clave === clave);
-    if (encontrado) {
-      empleado = encontrado;
-      document.getElementById("nombreEmpleado").innerText = empleado.nombre;
-      document.getElementById("cedulaEmpleado").innerText = empleado.cedula;
-      document.getElementById("cargoEmpleado").innerText = empleado.cargo;
-      document.getElementById("ingresoEmpleado").innerText = empleado.ingreso;
-      document.getElementById("salarioEmpleado").innerText = empleado.salario.toLocaleString();
-      document.getElementById("transporteEmpleado").innerText = empleado.transporte.toLocaleString();
-      document.getElementById("rodamientoEmpleado").innerText = empleado.rodamiento.toLocaleString();
-      document.getElementById("comisionesEmpleado").innerText = empleado.comisiones.toLocaleString();
-
-      document.getElementById("login").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
+  <script>
+    const empleado = JSON.parse(localStorage.getItem('empleado'));
+    if (!empleado) {
+      window.location.href = "index.html";
     } else {
-      alert("Usuario o contraseña incorrectos");
+      document.getElementById('nombre').innerText = empleado.nombre;
+      document.getElementById('cedula').innerText = empleado.cedula;
+      document.getElementById('cargo').innerText = empleado.cargo;
+      document.getElementById('ingreso').innerText = empleado.ingreso;
+
+      // Cálculo de vacaciones automáticas
+      const fechaIngreso = new Date(empleado.ingreso);
+      const hoy = new Date();
+      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+      const meses = hoy.getMonth() - fechaIngreso.getMonth();
+      const totalMeses = (años * 12) + meses;
+      const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
+      document.getElementById('vacaciones').innerText = diasVacaciones;
     }
-  } catch (error) {
-    alert("Error al cargar empleados.json");
-    console.error(error);
-  }
-}
 
-function cerrarSesion() {
-  empleado = null;
-  document.getElementById("dashboard").style.display = "none";
-  document.getElementById("login").style.display = "block";
-  document.getElementById("visor").innerHTML = "";
-}
+    function descargarColilla() {
+      const mes = new Date().toISOString().slice(0, 7);
+      const path = `colillas/${empleado.cedula}/${mes}.pdf`;
+      document.getElementById("visor").src = path;
+      document.getElementById("visor").style.display = "block";
+    }
 
-function verVacaciones() {
-  alert(`Días acumulados de vacaciones: ${empleado.vacaciones}`);
-}
+    function generarCertificado() {
+      const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+      const certHTML = `
+        <h3 style="text-align:center;">Sabaneta, ${fechaHoy}</h3>
+        <h2 style="text-align:center;">A QUIEN PUEDA INTERESAR</h2>
+        <p>
+          ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor <strong>${empleado.nombre}</strong>,
+          identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
+          labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha
+          bajo el cargo de <strong>${empleado.cargo}</strong> mediante un contrato a término indefinido.
+        </p>
+        <p>Este certificado se expide a solicitud del interesado.</p>
+        <br><br>
+        <p><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal suplente</p>
+        <p>servicio@andresraiz.com - 3588564</p>
+      `;
+      const win = window.open('', '_blank');
+      win.document.write(`<html><head><title>Certificado</title></head><body>${certHTML}</body></html>`);
+      win.document.close();
+      win.print();
+    }
 
-function verColilla() {
-  const cedula = empleado.cedula;
-  const archivo = `colillas/Q13 ${cedula}.pdf`;
-  document.getElementById("visor").innerHTML = `<iframe src="${archivo}"></iframe>`;
-}
-
-function generarCertificado() {
-  const { nombre, cedula, cargo, ingreso } = empleado;
-  const hoy = new Date();
-  const fecha = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-
-  const contenido = `
-    <div style="font-family: Arial; padding: 60px; text-align: justify; line-height: 1.5;">
-      <img src="logo.png" style="width: 160px; margin-bottom: 20px;">
-      <h2 style="text-align: center; color: #F39200;">CERTIFICADO LABORAL</h2>
-      <p>El suscrito, Representante Legal de <strong>ANDRÉS RAÍZ INMOBILIARIA</strong>, certifica que el(la) señor(a) <strong>${nombre}</strong>, identificado(a) con cédula de ciudadanía No. <strong>${cedula}</strong>, labora en nuestra empresa desempeñando el cargo de <strong>${cargo}</strong> desde el día <strong>${ingreso}</strong>, y a la fecha continúa vinculado(a).</p>
-      <p>El presente certificado se expide a solicitud del interesado en Bogotá D.C., a los <strong>${fecha}</strong>.</p>
-      <div style="margin-top: 80px; text-align: center;">
-        ___________________________<br>
-        Firma Autorizada
-      </div>
-    </div>
-  `;
-
-  const nueva = window.open('', '_blank');
-  nueva.document.write(`<html><head><title>Certificado Laboral</title></head><body>${contenido}</body></html>`);
-  nueva.document.close();
-  nueva.print();
-}
-</script>
+    function cerrarSesion() {
+      localStorage.removeItem('empleado');
+      window.location.href = "index.html";
+    }
+  </script>
 </body>
 </html>
