@@ -60,40 +60,14 @@
   </script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
-  function numeroALetras(num) {
-    const unidades = ['CERO','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
-    const especiales = ['DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
-    const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
-    const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-
-    function convertirGrupo(n) {
-      if (n === 0) return '';
-      if (n === 100) return 'CIEN';
-      let c = Math.floor(n / 100);
-      let d = Math.floor((n % 100) / 10);
-      let u = n % 10;
-      let texto = '';
-      if (c) texto += centenas[c] + ' ';
-      if (d === 1 && u > 0) {
-        texto += especiales[u] + ' ';
-      } else {
-        if (d) texto += decenas[d] + ' ';
-        if (u && d !== 1) texto += unidades[u] + ' ';
-      }
-      return texto.trim();
-    }
-
-    let miles = Math.floor(num / 1000);
-    let resto = num % 1000;
-    let texto = '';
-    if (miles === 1) texto += 'MIL ';
-    else if (miles > 1) texto += convertirGrupo(miles) + ' MIL ';
-    texto += convertirGrupo(resto);
-    return texto.trim() + ' PESOS COLOMBIANOS';
+  function numeroATexto(valor) {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
   }
 
-  function formatoPesos(num) {
-    return '$' + num.toLocaleString('es-CO');
+  function enLetras(num) {
+    const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+    const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+    return words + ' PESOS COLOMBIANOS';
   }
 
   async function generarCertificado() {
@@ -106,10 +80,18 @@
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo} mediante un contrato a término indefinido, con un salario básico de:
-${numeroALetras(salario)} (${formatoPesos(salario)}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A ${numeroALetras(transporte)} (${formatoPesos(transporte)}), UN AUXILIO DE RODAMIENTO EQUIVALENTE A ${numeroALetras(rodamiento)} (${formatoPesos(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON PROMEDIO DE ${numeroALetras(comisiones)} (${formatoPesos(comisiones)})
+${nombre} identificado con cedula de ciudadanía No.
+${cedula} labora en nuestra compañía desde el ${ingreso} hasta la fecha bajo el
+cargo de ${cargo} mediante un contrato a término indefinido, con un
+salario básico de:
 
-Cualquier información o requerimiento adicional con gusto será atendido por medio del correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
+${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
+
+Cualquier información o requerimiento adicional con gusto será atendido por medio del
+correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
     const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
     const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
@@ -117,13 +99,13 @@ Cualquier información o requerimiento adicional con gusto será atendido por me
     const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
     page.drawText(texto, {
-      x: 60,
-      y: 680,
+      x: 50,
+      y: 750,
       size: 10,
       font,
       lineHeight: 14,
-      maxWidth: 480,
       color: PDFLib.rgb(0, 0, 0),
+      maxWidth: 500,
     });
 
     const pdfBytes = await pdfDoc.save();
