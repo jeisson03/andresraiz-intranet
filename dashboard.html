@@ -61,13 +61,17 @@
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
   function numeroATexto(valor) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0
+    }).format(valor);
   }
 
-  function enLetras(num) {
-    const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-    const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
-    return words + ' PESOS COLOMBIANOS';
+  function enLetras(valor) {
+    const formateado = valor.toLocaleString('es-CO');
+    const partes = formateado.split(',')[0].split('.').join('');
+    return partes.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
   async function generarCertificado() {
@@ -85,10 +89,10 @@ ${cedula} labora en nuestra compañía desde el ${ingreso} hasta la fecha bajo e
 cargo de ${cargo} mediante un contrato a término indefinido, con un
 salario básico de:
 
-${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
+${numeroATexto(salario)} (${salario.toLocaleString('es-CO')}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${numeroATexto(transporte)} (${transporte.toLocaleString('es-CO')}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${numeroATexto(rodamiento)} (${rodamiento.toLocaleString('es-CO')}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${numeroATexto(comisiones)} (${comisiones.toLocaleString('es-CO')})
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
