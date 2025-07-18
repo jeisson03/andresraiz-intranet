@@ -2,20 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Intranet Básica Andrés Raíz</title>
+  <title>Prueba Básica Intranet Andrés Raíz</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    body { font-family: sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 500px; margin: 60px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
     h1 { color: #F39200; text-align: center; }
-    button { margin: 10px; padding: 10px 20px; background: #F39200; border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; }
-    button:hover { background: #E07C00; }
-    label, input { display: block; margin: 10px 0; width: 100%; }
-    #login, #dashboard { display: none; }
+    label, input { display: block; width: 100%; margin: 10px 0; }
+    button { padding: 10px; background: #F39200; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; }
+    button:hover { background: #e07c00; }
+    #dashboard { display: none; text-align: center; }
   </style>
 </head>
 <body>
   <div class="container" id="login">
-    <h1>Intranet Andrés Raíz</h1>
+    <h1>Iniciar Sesión</h1>
     <label for="usuario">Usuario:</label>
     <input type="text" id="usuario">
     <label for="clave">Contraseña:</label>
@@ -24,8 +24,8 @@
   </div>
 
   <div class="container" id="dashboard">
-    <h1>Bienvenido <span id="nombreEmpleado"></span></h1>
-    <button onclick="verVacaciones()">Ver vacaciones</button>
+    <h1>¡Bienvenido <span id="nombreEmpleado"></span>!</h1>
+    <p>Todo cargó correctamente ✅</p>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
   </div>
 
@@ -33,36 +33,32 @@
 let empleado = null;
 
 async function ingresar() {
-  const usuario = document.getElementById('usuario').value;
-  const clave = document.getElementById('clave').value;
+  const usuario = document.getElementById("usuario").value;
+  const clave = document.getElementById("clave").value;
+
   try {
-    const res = await fetch('empleados.json');
+    const res = await fetch("empleados.json");
     const empleados = await res.json();
     const encontrado = empleados.find(e => e.usuario === usuario && e.clave === clave);
+
     if (encontrado) {
       empleado = encontrado;
-      document.getElementById('nombreEmpleado').innerText = empleado.nombre;
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById("nombreEmpleado").innerText = empleado.nombre;
+      document.getElementById("login").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
     } else {
-      alert('Usuario o contraseña incorrectos');
+      alert("Usuario o contraseña incorrectos");
     }
-  } catch (e) {
-    alert('Error al cargar los datos de empleados');
-    console.error(e);
+  } catch (error) {
+    alert("Error cargando empleados.json");
+    console.error(error);
   }
 }
 
 function cerrarSesion() {
   empleado = null;
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('login').style.display = 'block';
-}
-
-function verVacaciones() {
-  if (empleado) {
-    alert(`Días acumulados de vacaciones: ${empleado.vacaciones}`);
-  }
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login").style.display = "block";
 }
 </script>
 </body>
