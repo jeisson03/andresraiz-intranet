@@ -2,10 +2,14 @@
   {
     "usuario": "renzon",
     "clave": "1234",
-    "nombre": "RENZON DAVID ABRIL FUENTES",
+    "nombre": "RENZON GARCÍA",
     "cedula": "1110606967",
-    "cargo": "Asesor inmobiliario",
-    "ingreso": "2023-05-16",
-    "vacaciones": 10
+    "cargo": "ASESOR COMERCIAL",
+    "ingreso": "1 de febrero de 2023",
+    "salario": 1423500,
+    "transporte": 200000,
+    "rodamiento": 350000,
+    "comisiones": 2400000,
+    "vacaciones": 8
   }
 ]
