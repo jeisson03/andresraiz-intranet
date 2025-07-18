@@ -59,33 +59,39 @@
     }
   </script>
 
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+ <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 <script>
-// Función para convertir número a texto (simplificada)
-function enLetras(num) {
-  const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
+// Librería para pasar número a letras (versión mejorada)
+function numeroALetras(num) {
+  const unidades = ['CERO','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
+  const especiales = ['DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
   const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
-  const centenas = ['','CIEN','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
 
-  const numberToWords = (n) => {
-    if (n === 0) return 'CERO';
-    let words = '';
-    if (n > 999999) return 'VALOR MUY ALTO';
-    const mil = Math.floor(n / 1000);
-    const resto = n % 1000;
-    if (mil > 0) {
-      words += mil === 1 ? 'MIL ' : `${numberToWords(mil)} MIL `;
+  function convertirGrupo(n) {
+    if (n === 0) return '';
+    if (n === 100) return 'CIEN';
+    let c = Math.floor(n / 100);
+    let d = Math.floor((n % 100) / 10);
+    let u = n % 10;
+    let texto = '';
+    if (c) texto += centenas[c] + ' ';
+    if (d === 1 && u > 0) {
+      texto += especiales[u] + ' ';
+    } else {
+      if (d) texto += decenas[d] + ' ';
+      if (u && d !== 1) texto += unidades[u] + ' ';
     }
-    const c = Math.floor(resto / 100);
-    const d = Math.floor((resto % 100) / 10);
-    const u = resto % 10;
-    if (c > 0) words += centenas[c] + ' ';
-    if (d > 0) words += decenas[d] + ' ';
-    if (u > 0 && d !== 1) words += unidades[u] + ' ';
-    return words.trim();
-  };
+    return texto.trim();
+  }
 
-  return numberToWords(num) + ' PESOS COLOMBIANOS';
+  let miles = Math.floor(num / 1000);
+  let resto = num % 1000;
+  let texto = '';
+  if (miles === 1) texto += 'MIL ';
+  else if (miles > 1) texto += convertirGrupo(miles) + ' MIL ';
+  texto += convertirGrupo(resto);
+  return texto.trim() + ' PESOS COLOMBIANOS';
 }
 
 function formatoPesos(num) {
@@ -105,10 +111,10 @@ ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
-${enLetras(salario)} (${formatoPesos(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${formatoPesos(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento)} (${formatoPesos(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${formatoPesos(comisiones)})
+${numeroALetras(salario)} (${formatoPesos(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${numeroALetras(transporte)} (${formatoPesos(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${numeroALetras(rodamiento)} (${formatoPesos(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${numeroALetras(comisiones)} (${formatoPesos(comisiones)})
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
@@ -120,7 +126,7 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
 
   page.drawText(texto, {
     x: 50,
-    y: 500, // Ajusta esta coordenada para que el bloque caiga en zona libre
+    y: 500, // Ajusta esta coordenada si choca con el texto del PDF
     size: 10,
     font,
     lineHeight: 14,
@@ -136,6 +142,7 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
   visor.style.display = 'block';
 }
 </script>
+
 
 </body>
 </html>
