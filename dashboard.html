@@ -2,22 +2,19 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Intranet Andrés Raíz</title>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <title>Intranet Básica Andrés Raíz</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
-    .container { max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     h1 { color: #F39200; text-align: center; }
     button { margin: 10px; padding: 10px 20px; background: #F39200; border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; }
     button:hover { background: #E07C00; }
-    label, input { display: block; margin: 10px 0; }
+    label, input { display: block; margin: 10px 0; width: 100%; }
     #login, #dashboard { display: none; }
-    .logo { width: 120px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
   <div class="container" id="login">
-    <img src="assets/logo.png" alt="Logo" class="logo">
     <h1>Intranet Andrés Raíz</h1>
     <label for="usuario">Usuario:</label>
     <input type="text" id="usuario">
@@ -28,9 +25,7 @@
 
   <div class="container" id="dashboard">
     <h1>Bienvenido <span id="nombreEmpleado"></span></h1>
-    <button onclick="generarColilla()">Ver colilla de pago</button>
-    <button onclick="verVacaciones()">Ver días de vacaciones</button>
-    <button onclick="generarCertificado()">Generar certificado laboral</button>
+    <button onclick="verVacaciones()">Ver vacaciones</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
   </div>
 
@@ -40,16 +35,21 @@ let empleado = null;
 async function ingresar() {
   const usuario = document.getElementById('usuario').value;
   const clave = document.getElementById('clave').value;
-  const res = await fetch('empleados.json');
-  const empleados = await res.json();
-  const encontrado = empleados.find(e => e.usuario === usuario && e.clave === clave);
-  if (encontrado) {
-    empleado = encontrado;
-    document.getElementById('nombreEmpleado').innerText = empleado.nombre;
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-  } else {
-    alert('Usuario o contraseña incorrectos');
+  try {
+    const res = await fetch('empleados.json');
+    const empleados = await res.json();
+    const encontrado = empleados.find(e => e.usuario === usuario && e.clave === clave);
+    if (encontrado) {
+      empleado = encontrado;
+      document.getElementById('nombreEmpleado').innerText = empleado.nombre;
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+    } else {
+      alert('Usuario o contraseña incorrectos');
+    }
+  } catch (e) {
+    alert('Error al cargar los datos de empleados');
+    console.error(e);
   }
 }
 
@@ -59,39 +59,11 @@ function cerrarSesion() {
   document.getElementById('login').style.display = 'block';
 }
 
-function generarColilla() {
-  const nombreArchivo = `Q13 ${empleado.cedula}.pdf`;
-  window.open(`colillas/${nombreArchivo}`, '_blank');
-}
-
 function verVacaciones() {
-  alert(`Días acumulados de vacaciones: ${empleado.vacaciones}`);
-}
-
-async function generarCertificado() {
-  const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-  const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
-  const salarioTexto = "UN MILLÓN CUATROCIENTOS VEINTITRÉS MIL QUINIENTOS PESOS";
-  const existingPdfBytes = await fetch('certificados/certificado_base.pdf').then(res => res.arrayBuffer());
-  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-  const pages = pdfDoc.getPages();
-  const firstPage = pages[0];
-  const { width, height } = firstPage.getSize();
-  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-
-  firstPage.drawText(nombre, { x: 110, y: height - 250, size: 11, font });
-  firstPage.drawText(cedula, { x: 150, y: height - 270, size: 11, font });
-  firstPage.drawText(cargo, { x: 120, y: height - 290, size: 11, font });
-  firstPage.drawText(ingreso, { x: 150, y: height - 310, size: 11, font });
-  firstPage.drawText(salarioTexto + ` ($${salario.toLocaleString('es-CO')})`, { x: 80, y: height - 330, size: 11, font });
-  firstPage.drawText(fechaHoy, { x: 400, y: height - 180, size: 11, font });
-
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  if (empleado) {
+    alert(`Días acumulados de vacaciones: ${empleado.vacaciones}`);
+  }
 }
 </script>
 </body>
 </html>
-
