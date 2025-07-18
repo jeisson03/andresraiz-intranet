@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Intranet Andrés Raíz</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-container">
+    <img src="assets/logo.png" alt="Logo" class="logo">
+    <h2>Intranet - Andrés Raíz</h2>
+    <form id="loginForm">
+      <input type="text" id="usuario" placeholder="Usuario" required>
+      <input type="password" id="clave" placeholder="Contraseña" required>
+      <button type="submit">Ingresar</button>
+    </form>
+    <p id="error" class="error-msg"></p>
+  </div>
+
+  <script>
+    async function obtenerDatos() {
+      const res = await fetch('empleados.json');
+      return await res.json();
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = document.getElementById('usuario').value.trim().toLowerCase();
+      const pass = document.getElementById('clave').value.trim();
+
+      const empleados = await obtenerDatos();
+      const empleado = empleados.find(emp => emp.usuario === user && emp.clave === pass);
+
+      if (empleado) {
+        localStorage.setItem('empleado', JSON.stringify(empleado));
+        window.location.href = 'dashboard.html';
+      } else {
+        document.getElementById('error').innerText = 'Usuario o contraseña incorrectos.';
+      }
+    });
+  </script>
+</body>
+</html>
