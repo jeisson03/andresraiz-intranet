@@ -2,15 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Prueba Básica Intranet Andrés Raíz</title>
+  <title>Intranet Andrés Raíz</title>
   <style>
-    body { font-family: sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
-    .container { max-width: 500px; margin: 60px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 50px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
     h1 { color: #F39200; text-align: center; }
     label, input { display: block; width: 100%; margin: 10px 0; }
-    button { padding: 10px; background: #F39200; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; }
-    button:hover { background: #e07c00; }
+    button { margin: 10px 0; padding: 10px; background: #F39200; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; }
+    button:hover { background: #E07C00; }
     #dashboard { display: none; text-align: center; }
+    iframe { width: 100%; height: 600px; border: none; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -24,9 +25,12 @@
   </div>
 
   <div class="container" id="dashboard">
-    <h1>¡Bienvenido <span id="nombreEmpleado"></span>!</h1>
-    <p>Todo cargó correctamente ✅</p>
+    <h1>Bienvenido <span id="nombreEmpleado"></span></h1>
+    <button onclick="verColilla()">Ver colilla</button>
+    <button onclick="verVacaciones()">Ver vacaciones</button>
+    <button onclick="generarCertificado()">Generar certificado laboral</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
+    <div id="visor"></div>
   </div>
 
 <script>
@@ -59,6 +63,41 @@ function cerrarSesion() {
   empleado = null;
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("login").style.display = "block";
+  document.getElementById("visor").innerHTML = "";
+}
+
+function verVacaciones() {
+  alert(`Días acumulados de vacaciones: ${empleado.vacaciones}`);
+}
+
+function verColilla() {
+  const cedula = empleado.cedula;
+  const archivo = `colillas/Q13 ${cedula}.pdf`;
+  document.getElementById("visor").innerHTML = `<iframe src="${archivo}"></iframe>`;
+}
+
+function generarCertificado() {
+  const { nombre, cedula, cargo, ingreso } = empleado;
+  const hoy = new Date();
+  const fecha = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const contenido = `
+    <div style="font-family: Arial; padding: 60px; text-align: justify; line-height: 1.5;">
+      <img src="logo.png" style="width: 160px; margin-bottom: 20px;">
+      <h2 style="text-align: center; color: #F39200;">CERTIFICADO LABORAL</h2>
+      <p>El suscrito, Representante Legal de <strong>ANDRÉS RAÍZ INMOBILIARIA</strong>, certifica que el(la) señor(a) <strong>${nombre}</strong>, identificado(a) con cédula de ciudadanía No. <strong>${cedula}</strong>, labora en nuestra empresa desempeñando el cargo de <strong>${cargo}</strong> desde el día <strong>${ingreso}</strong>, y a la fecha continúa vinculado(a).</p>
+      <p>El presente certificado se expide a solicitud del interesado en Bogotá D.C., a los <strong>${fecha}</strong>.</p>
+      <div style="margin-top: 80px; text-align: center;">
+        ___________________________<br>
+        Firma Autorizada
+      </div>
+    </div>
+  `;
+
+  const nueva = window.open('', '_blank');
+  nueva.document.write(`<html><head><title>Certificado Laboral</title></head><body>${contenido}</body></html>`);
+  nueva.document.close();
+  nueva.print();
 }
 </script>
 </body>
