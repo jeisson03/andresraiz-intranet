@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel - Andrés Raíz</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="panel">
+    <img src="assets/logo.png" class="logo" alt="Logo"/>
+    <h2>Bienvenido, <span id="nombre"></span></h2>
+
+    <div class="info-box">
+      <p><strong>Cédula:</strong> <span id="cedula"></span></p>
+      <p><strong>Cargo:</strong> <span id="cargo"></span></p>
+      <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
+      <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones"></span> días</p>
+    </div>
+
+    <div class="btn-group">
+      <button onclick="descargarColilla()">Ver colilla de este mes</button>
+      <button onclick="generarCertificado()">Generar certificado laboral</button>
+      <button onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+
+    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
+  </div>
+
+  <script>
+    const empleado = JSON.parse(localStorage.getItem('empleado'));
+    if (!empleado) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById('nombre').innerText = empleado.nombre;
+      document.getElementById('cedula').innerText = empleado.cedula;
+      document.getElementById('cargo').innerText = empleado.cargo;
+      document.getElementById('ingreso').innerText = empleado.ingreso;
+
+      // Cálculo de vacaciones automáticas
+      const fechaIngreso = new Date(empleado.ingreso);
+      const hoy = new Date();
+      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+      const meses = hoy.getMonth() - fechaIngreso.getMonth();
+      const totalMeses = (años * 12) + meses;
+      const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
+      document.getElementById('vacaciones').innerText = diasVacaciones;
+    }
+
+    function descargarColilla() {
+      const mes = new Date().toISOString().slice(0, 7);
+      const path = `colillas/${empleado.cedula}/${mes}.pdf`;
+      document.getElementById("visor").src = path;
+      document.getElementById("visor").style.display = "block";
+    }
+
+    function generarCertificado() {
+      const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+      const certHTML = `
+        <h3 style="text-align:center;">Sabaneta, ${fechaHoy}</h3>
+        <h2 style="text-align:center;">A QUIEN PUEDA INTERESAR</h2>
+        <p>
+          ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor <strong>${empleado.nombre}</strong>,
+          identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
+          labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha
+          bajo el cargo de <strong>${empleado.cargo}</strong> mediante un contrato a término indefinido.
+        </p>
+        <p>Este certificado se expide a solicitud del interesado.</p>
+        <br><br>
+        <p><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal suplente</p>
+        <p>servicio@andresraiz.com - 3588564</p>
+      `;
+      const win = window.open('', '_blank');
+      win.document.write(`<html><head><title>Certificado</title></head><body>${certHTML}</body></html>`);
+      win.document.close();
+      win.print();
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem('empleado');
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
