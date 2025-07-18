@@ -54,27 +54,59 @@
       document.getElementById("visor").style.display = "block";
     }
 
-    function generarCertificado() {
-      const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
-      const certHTML = `
-        <h3 style="text-align:center;">Sabaneta, ${fechaHoy}</h3>
-        <h2 style="text-align:center;">A QUIEN PUEDA INTERESAR</h2>
-        <p>
-          ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor <strong>${empleado.nombre}</strong>,
-          identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
-          labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha
-          bajo el cargo de <strong>${empleado.cargo}</strong> mediante un contrato a término indefinido.
-        </p>
-        <p>Este certificado se expide a solicitud del interesado.</p>
-        <br><br>
-        <p><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal suplente</p>
-        <p>servicio@andresraiz.com - 3588564</p>
-      `;
-      const win = window.open('', '_blank');
-      win.document.write(`<html><head><title>Certificado</title></head><body>${certHTML}</body></html>`);
-      win.document.close();
-      win.print();
-    }
+function numeroALetras(valor) {
+  // Conversión básica para los valores que usas
+  if (valor === 1423500) return "UN MILLÓN CUATROCIENTOS VEINTITRÉS MIL QUINIENTOS PESOS COLOMBIANOS";
+  if (valor === 200000) return "DOSCIENTOS MIL PESOS COLOMBIANOS";
+  if (valor === 350000) return "TRESCIENTOS CINCUENTA MIL PESOS COLOMBIANOS";
+  if (valor === 2400000) return "DOS MILLONES CUATROCIENTOS MIL PESOS COLOMBIANOS";
+  return valor + " PESOS";
+}
+
+function generarCertificado() {
+  const fechaHoy = new Date().toLocaleDateString('es-CO', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  const certHTML = `
+  <div style="max-width:700px; margin:auto; font-family:'Segoe UI', sans-serif; color:#000; font-size:15px; line-height:1.6;">
+    <p style="text-align:right;">Sabaneta, ${fechaHoy}</p>
+    <h2 style="text-align:center; margin-bottom:40px;">A QUIEN PUEDA INTERESAR</h2>
+    
+    <p style="text-align:justify;">
+      ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor <strong>${empleado.nombre}</strong>, identificado con cédula de ciudadanía No. <strong>${empleado.cedula}</strong>,
+      labora en nuestra compañía desde el <strong>${empleado.ingreso}</strong> hasta la fecha bajo el cargo de <strong>${empleado.cargo}</strong> mediante un contrato a término indefinido,
+      con un salario básico de:
+    </p>
+
+    <p style="text-align:justify;">
+      ${numeroALetras(empleado.salario)} ($${empleado.salario.toLocaleString("es-CO")}), 
+      con auxilio de transporte equivalente a ${numeroALetras(empleado.transporte)} ($${empleado.transporte.toLocaleString("es-CO")}), 
+      un auxilio de rodamiento de ${numeroALetras(empleado.rodamiento)} ($${empleado.rodamiento.toLocaleString("es-CO")}), 
+      más comisiones no constitutivas de salario con promedio de ${numeroALetras(empleado.comisiones)} ($${empleado.comisiones.toLocaleString("es-CO")}).
+    </p>
+
+    <p style="text-align:justify;">
+      Cualquier información o requerimiento adicional será atendido por medio del correo <strong>servicio@andresraiz.com</strong> o los teléfonos 358 85 64 y 3245366761.
+    </p>
+
+    <br><br><br>
+    <p><strong>JADISON ARLEY MENDOZA TABARES</strong><br>Representante Legal suplente</p>
+    <p>Andrés Raíz Inmobiliaria S.A.S<br>NIT: 901.524.934-1</p>
+  </div>
+  `;
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html>
+      <head><title>Certificado</title></head>
+      <body>${certHTML}</body>
+    </html>
+  `);
+  win.document.close();
+  win.print();
+}
+
 
     function cerrarSesion() {
       localStorage.removeItem('empleado');
