@@ -60,62 +60,82 @@
   </script>
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script>
-  function numeroATexto(valor) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
-  }
+<script>
+// Función para convertir número a texto (simplificada)
+function enLetras(num) {
+  const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
+  const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const centenas = ['','CIEN','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
 
-  function enLetras(valor) {
-    const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
-    const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
-    const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-    // Función simplificada para valores básicos:
-    const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-    return formatter.format(valor).replace('$', '').trim() + ' PESOS COLOMBIANOS';
-  }
+  const numberToWords = (n) => {
+    if (n === 0) return 'CERO';
+    let words = '';
+    if (n > 999999) return 'VALOR MUY ALTO';
+    const mil = Math.floor(n / 1000);
+    const resto = n % 1000;
+    if (mil > 0) {
+      words += mil === 1 ? 'MIL ' : `${numberToWords(mil)} MIL `;
+    }
+    const c = Math.floor(resto / 100);
+    const d = Math.floor((resto % 100) / 10);
+    const u = resto % 10;
+    if (c > 0) words += centenas[c] + ' ';
+    if (d > 0) words += decenas[d] + ' ';
+    if (u > 0 && d !== 1) words += unidades[u] + ' ';
+    return words.trim();
+  };
 
-  async function generarCertificado() {
-    const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-    const hoy = new Date();
-    const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+  return numberToWords(num) + ' PESOS COLOMBIANOS';
+}
 
-    const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-    const page = pdfDoc.getPages()[0];
-    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+function formatoPesos(num) {
+  return '$' + num.toLocaleString('es-CO');
+}
 
-    const texto = `Sabaneta, ${fechaActual}
+async function generarCertificado() {
+  const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+  const hoy = new Date();
+  const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const texto = `Sabaneta, ${fechaActual}
+
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
-${enLetras(salario)} (${numeroATexto(salario)}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
+${enLetras(salario)} (${formatoPesos(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${formatoPesos(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${formatoPesos(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${formatoPesos(comisiones)})
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
-    page.drawText(texto, {
-      x: 50,
-      y: 650,
-      size: 10,
-      font,
-      lineHeight: 14,
-      color: PDFLib.rgb(0, 0, 0),
-      maxWidth: 500
-    });
+  const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+  const page = pdfDoc.getPages()[0];
+  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const visor = document.getElementById('visor');
-    visor.src = url;
-    visor.style.display = 'block';
-  }
-  </script>
+  page.drawText(texto, {
+    x: 50,
+    y: 500, // Ajusta esta coordenada para que el bloque caiga en zona libre
+    size: 10,
+    font,
+    lineHeight: 14,
+    maxWidth: 500,
+    color: PDFLib.rgb(0, 0, 0),
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const visor = document.getElementById('visor');
+  visor.src = url;
+  visor.style.display = 'block';
+}
+</script>
+
 </body>
 </html>
