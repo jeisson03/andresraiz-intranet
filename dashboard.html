@@ -61,17 +61,13 @@
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
   function numeroATexto(valor) {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(valor);
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
   }
 
-  function enLetras(valor) {
-    const formateado = valor.toLocaleString('es-CO');
-    const partes = formateado.split(',')[0].split('.').join('');
-    return partes.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  function enLetras(num) {
+    const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+    const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+    return words;
   }
 
   async function generarCertificado() {
@@ -84,15 +80,12 @@
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cedula de ciudadanía No.
-${cedula} labora en nuestra compañía desde el ${ingreso} hasta la fecha bajo el
-cargo de ${cargo} mediante un contrato a término indefinido, con un
-salario básico de:
+${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo} mediante un contrato a término indefinido, con un salario básico de:
 
-${numeroATexto(salario)} (${salario.toLocaleString('es-CO')}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${numeroATexto(transporte)} (${transporte.toLocaleString('es-CO')}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${numeroATexto(rodamiento)} (${rodamiento.toLocaleString('es-CO')}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${numeroATexto(comisiones)} (${comisiones.toLocaleString('es-CO')})
+${enLetras(salario).toUpperCase()} ($${numeroATexto(salario)}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte).toUpperCase()} ($${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} ($${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones).toUpperCase()} ($${numeroATexto(comisiones)})
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
