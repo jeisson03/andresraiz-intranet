@@ -37,7 +37,6 @@
       document.getElementById('cargo').innerText = empleado.cargo;
       document.getElementById('ingreso').innerText = empleado.ingreso;
 
-      // Cálculo de vacaciones automáticas
       const fechaIngreso = new Date(empleado.ingreso);
       const hoy = new Date();
       const años = hoy.getFullYear() - fechaIngreso.getFullYear();
@@ -59,65 +58,61 @@
       window.location.href = "index.html";
     }
   </script>
- <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-<script>
-function numeroATexto(valor) {
-  const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-  const enLetras = new Intl.NumberFormat('es', { style: 'unit', unit: 'long' }).format(valor);
-  return formatter.format(valor) + " (" + valorEnLetras(valor).toUpperCase() + ")";
-}
 
-function valorEnLetras(num) {
-  // Versión simple. Podemos reemplazar por librería si quieres precisión legal
-  const formatter = new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0
-  });
-  return formatter.format(num);
-}
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    function numeroATexto(valor) {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+    }
 
-async function generarCertificado() {
-  const { nombre, cedula, cargo, ingreso, salario, rodamiento, comisiones } = empleado;
-  const hoy = new Date();
-  const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+    function enLetras(num) {
+      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+      const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+      return words + ' PESOS COLOMBIANOS';
+    }
 
-  const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-  const pages = pdfDoc.getPages();
-  const firstPage = pages[0];
-  const { width, height } = firstPage.getSize();
-  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    async function generarCertificado() {
+      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+      const hoy = new Date();
+      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-  // Datos básicos
-  firstPage.drawText(nombre, { x: 160, y: height - 245, size: 11, font, color: PDFLib.rgb(0, 0, 0) });
-  firstPage.drawText(cedula, { x: 170, y: height - 262, size: 11, font, color: PDFLib.rgb(0, 0, 0) });
-  firstPage.drawText(cargo, { x: 175, y: height - 278, size: 11, font, color: PDFLib.rgb(0, 0, 0) });
-  firstPage.drawText(ingreso, { x: 235, y: height - 293, size: 11, font, color: PDFLib.rgb(0, 0, 0) });
-  firstPage.drawText(fechaActual, { x: 215, y: height - 337, size: 11, font, color: PDFLib.rgb(0, 0, 0) });
+      const texto = `Sabaneta, ${fechaActual}
+A QUIEN PUEDA INTERESAR
 
-  // Salario y otros valores
-  const textoSalario = `Devenga un salario mensual de $${salario.toLocaleString('es-CO')} (${valorEnLetras(salario).toUpperCase()}), más auxilio de rodamiento de $${rodamiento.toLocaleString('es-CO')} y comisiones mensuales promedio de $${comisiones.toLocaleString('es-CO')}.`;
+ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
+${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
+nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
+mediante un contrato a término indefinido, con un salario básico de:
+${enLetras(salario)} (${numeroATexto(salario)}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
 
-  firstPage.drawText(textoSalario, {
-    x: 60,
-    y: height - 310,
-    size: 11,
-    font,
-    color: PDFLib.rgb(0, 0, 0),
-    maxWidth: 480,
-    lineHeight: 14
-  });
+Cualquier información o requerimiento adicional con gusto será atendido por medio del
+correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const visor = document.getElementById('visor');
-  visor.src = url;
-  visor.style.display = 'block';
-}
-</script>
+      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+      const page = pdfDoc.getPages()[0];
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
+      page.drawText(texto, {
+        x: 50,
+        y: 670,
+        size: 10,
+        font,
+        lineHeight: 14,
+        color: PDFLib.rgb(0, 0, 0),
+        maxWidth: 500,
+      });
 
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const visor = document.getElementById('visor');
+      visor.src = url;
+      visor.style.display = 'block';
+    }
+  </script>
 </body>
 </html>
