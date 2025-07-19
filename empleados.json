@@ -15,9 +15,9 @@
   {
     "usuario": "renzon",
     "clave": "1234",
-    "nombre": "RENZON GARCÍA",
+    "nombre": "RENZON ABRIL",
     "cedula": "1110606967",
-    "cargo": "ASESOR COMERCIAL",
+    "cargo": "AUXILIAR DE MANTENIMIENTO",
     "ingreso": "2024-18-07",
     "salario": 1423500,
     "transporte": 200000,
@@ -28,7 +28,7 @@
   {
     "usuario": "json",
     "clave": "12345",
-    "nombre": "marco",
+    "nombre": "ARMANDO CASAS",
     "cedula": "1110606967",
     "cargo": "ASESOR COMERCIAL",
     "ingreso": "2021-18-07",
