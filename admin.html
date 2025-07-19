@@ -1,51 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agregar empleado</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administrador - Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 30px auto; }
+    h2 { text-align: center; }
+    input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px 20px; margin-top: 10px; }
+  </style>
 </head>
 <body>
-  <div class="panel">
-    <img src="assets/logo.png" class="logo" alt="Logo">
-    <h2>Agregar nuevo empleado</h2>
+  <h2 id="titulo">Administrador - Agregar empleados</h2>
 
-    <form id="form-empleado" style="display:block">
-      <label>Nombre completo:<br><input type="text" name="nombre" required></label><br>
-      <label>Cédula:<br><input type="text" name="cedula" required></label><br>
-      <label>Cargo:<br><input type="text" name="cargo" required></label><br>
-      <label>Fecha de ingreso:<br><input type="text" name="ingreso" placeholder="ej: 1 de febrero de 2023" required></label><br>
-      <label>Salario:<br><input type="number" name="salario" required></label><br>
-      <label>Auxilio de transporte:<br><input type="number" name="transporte" required></label><br>
-      <label>Rodamiento:<br><input type="number" name="rodamiento" required></label><br>
-      <label>Promedio comisiones:<br><input type="number" name="comisiones" required></label><br>
-      <label>Días de vacaciones tomados (si aplica):<br><input type="number" name="vacaciones" value="0"></label><br>
-      <label>Usuario:<br><input type="text" name="usuario" required></label><br>
-      <label>Contraseña:<br><input type="password" name="clave" required></label><br>
-      <button type="submit">Guardar empleado</button>
-    </form>
-
-    <p><a href="index.html">← Volver al inicio</a></p>
+  <div id="panel" style="display: none;">
+    <textarea id="jsonEmpleados" rows="15" placeholder='Pegue aquí el JSON de empleados'></textarea>
+    <button onclick="guardarJSON()">Guardar empleados</button>
+    <p id="mensaje" style="color: green;"></p>
   </div>
 
   <script>
-    document.getElementById("form-empleado").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const empleado = {};
-      formData.forEach((valor, campo) => {
-        empleado[campo] = campo === 'vacaciones' || campo === 'salario' || campo === 'transporte' || campo === 'rodamiento' || campo === 'comisiones' ? Number(valor) : valor;
-      });
+    // Validar si el usuario es administrador
+    const usuario = JSON.parse(localStorage.getItem("empleado"));
 
-      const empleados = JSON.parse(localStorage.getItem("empleados")) || [];
-      empleados.push(empleado);
-      localStorage.setItem("empleados", JSON.stringify(empleados));
+    if (!usuario || usuario.usuario !== "admin") {
+      document.body.innerHTML = "<p style='color:red; text-align:center;'>Acceso restringido. Solo para administradores.</p>";
+    } else {
+      document.getElementById("panel").style.display = "block";
+    }
 
-      alert("Empleado guardado exitosamente.");
-      window.location.href = "index.html";
-    });
+    function guardarJSON() {
+      try {
+        const datos = JSON.parse(document.getElementById("jsonEmpleados").value);
+        localStorage.setItem("empleadosData", JSON.stringify(datos));
+        document.getElementById("mensaje").innerText = "Datos guardados correctamente.";
+      } catch (e) {
+        alert("El JSON no es válido");
+      }
+    }
   </script>
 </body>
 </html>
-
