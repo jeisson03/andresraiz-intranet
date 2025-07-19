@@ -1,7 +1,7 @@
 [
   {
-  "nombre": "Administrador",
-  "cedula": "0000",
+  "nombre": "MARIA GOMEZ",
+  "cedula": "1010062407",
   "cargo": "Administrador",
   "ingreso": "1 de enero de 2023",
   "salario": 0,
@@ -9,8 +9,8 @@
   "rodamiento": 0,
   "comisiones": 0,
   "vacaciones": 0,
-  "usuario": "admin",
-  "clave": "admin123"
+  "usuario": "mafego",
+  "clave": "mafego03"
 },
   {
     "usuario": "renzon",
