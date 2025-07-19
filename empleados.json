@@ -26,9 +26,9 @@
     "vacaciones": "8"
   },
   {
-    "usuario": "json",
+    "usuario": "administrador",
     "clave": "12345",
-    "nombre": "ARMANDO CASAS",
+    "nombre": "administrador",
     "cedula": "1110606967",
     "cargo": "ASESOR COMERCIAL",
     "ingreso": "2021-18-07",
