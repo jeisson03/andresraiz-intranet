@@ -36,7 +36,7 @@
         'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
       };
       const partes = fechaTexto.toLowerCase().split(' de ');
-      if (partes.length !== 3) return fechaTexto;
+      if (partes.length !== 3 || !meses[partes[1]]) return null;
       return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
     }
 
@@ -51,12 +51,16 @@
 
       const fechaNormalizada = normalizarFecha(empleado.ingreso);
       const fechaIngreso = new Date(fechaNormalizada);
-      const hoy = new Date();
-      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
-      const meses = hoy.getMonth() - fechaIngreso.getMonth();
-      const totalMeses = (años * 12) + meses;
-      const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
-      document.getElementById('vacaciones').innerText = diasVacaciones;
+      if (!isNaN(fechaIngreso)) {
+        const hoy = new Date();
+        const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+        const meses = hoy.getMonth() - fechaIngreso.getMonth();
+        const totalMeses = (años * 12) + meses;
+        const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
+        document.getElementById('vacaciones').innerText = diasVacaciones;
+      } else {
+        document.getElementById('vacaciones').innerText = "0";
+      }
     }
 
     function descargarColilla() {
@@ -74,19 +78,28 @@
     }
 
     function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      }).format(valor);
     }
 
     function enLetras(num) {
-      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-      const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
-      return words;
+      const formatter = new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      });
+      return formatter.format(num).replace(/\./g, '').replace('$', '').trim().toUpperCase();
     }
 
     async function generarCertificado() {
       const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
       const hoy = new Date();
-      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+      const fechaActual = hoy.toLocaleDateString("es-CO", {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
 
       const texto = `Sabaneta, ${fechaActual}
 
@@ -97,10 +110,10 @@ ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
 
-${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})
+${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)}).
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
@@ -112,10 +125,10 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
 
       page.drawText(texto, {
         x: 50,
-        y: 620,
+        y: 720,
         size: 10,
         font,
-        lineHeight: 14,
+        lineHeight: 18,
         color: PDFLib.rgb(0, 0, 0),
         maxWidth: 500,
       });
