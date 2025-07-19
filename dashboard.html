@@ -76,22 +76,7 @@
       const hoy = new Date();
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const texto = `Sabaneta, ${fechaActual}\n\n
-
-A QUIEN PUEDA INTERESAR\n\n
-
-ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:\n\n
-
-${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), con auxilio de transporte equivalente a
-${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), un auxilio de rodamiento
-equivalente a ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) más comisiones no constitutivas de salario con
-promedio de ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n\n
-
-Cualquier información o requerimiento adicional con gusto será atendido por medio del
-correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761.`;
+      const texto = `Sabaneta, ${fechaActual}\n\nA QUIEN PUEDA INTERESAR\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor\n${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en\nnuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}\nmediante un contrato a término indefinido, con un salario básico de:\n\n${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A\n${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO\nEQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON\nPROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n\nCualquier información o requerimiento adicional con gusto será atendido por medio del\ncorreo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
       const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
       const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
@@ -100,7 +85,7 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
 
       page.drawText(texto, {
         x: 50,
-        y: 700,
+        y: 640,
         size: 10,
         font,
         lineHeight: 14,
