@@ -1,5 +1,18 @@
 [
   {
+  "nombre": "Administrador",
+  "cedula": "0000",
+  "cargo": "Administrador",
+  "ingreso": "1 de enero de 2023",
+  "salario": 0,
+  "transporte": 0,
+  "rodamiento": 0,
+  "comisiones": 0,
+  "vacaciones": 0,
+  "usuario": "admin",
+  "clave": "admin123"
+},
+  {
     "usuario": "renzon",
     "clave": "1234",
     "nombre": "RENZON GARCÍA",
@@ -24,18 +37,6 @@
     "rodamiento": 350000,
     "comisiones": 2400000,
     "vacaciones": 8
-  },
-  {
-    "usuario": "admin",
-    "clave": "1234",
-    "nombre": "admin",
-    "cedula": "1110606967",
-    "cargo": "ASESOR COMERCIAL",
-    "ingreso": "2024-18-07",
-    "salario": 1423500,
-    "transporte": 200000,
-    "rodamiento": 350000,
-    "comisiones": 2400000,
-    "vacaciones": 8
   }
+ 
 ]
