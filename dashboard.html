@@ -29,6 +29,17 @@
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
+    function normalizarFecha(fechaTexto) {
+      const meses = {
+        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+      };
+      const partes = fechaTexto.toLowerCase().split(' de ');
+      if (partes.length !== 3) return fechaTexto;
+      return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
+    }
+
     const empleado = JSON.parse(localStorage.getItem('empleado'));
     if (!empleado) {
       window.location.href = "index.html";
@@ -38,7 +49,8 @@
       document.getElementById('cargo').innerText = empleado.cargo;
       document.getElementById('ingreso').innerText = empleado.ingreso;
 
-      const fechaIngreso = new Date(empleado.ingreso);
+      const fechaNormalizada = normalizarFecha(empleado.ingreso);
+      const fechaIngreso = new Date(fechaNormalizada);
       const hoy = new Date();
       const años = hoy.getFullYear() - fechaIngreso.getFullYear();
       const meses = hoy.getMonth() - fechaIngreso.getMonth();
@@ -67,32 +79,9 @@
 
     function enLetras(num) {
       const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-      return formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+      const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+      return words;
     }
-    function numeroEnLetras(valor) {
-  const UNIDADES = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE'];
-  const DECENAS = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
-  const CENTENAS = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-
-  function convertir(num) {
-    if (num === 0) return 'CERO';
-    if (num < 16) return UNIDADES[num];
-    if (num < 100) return DECENAS[Math.floor(num / 10)] + (num % 10 !== 0 ? ' Y ' + UNIDADES[num % 10] : '');
-    if (num === 100) return 'CIEN';
-    if (num < 1000) return CENTENAS[Math.floor(num / 100)] + (num % 100 !== 0 ? ' ' + convertir(num % 100) : '');
-    if (num < 1000000) {
-      const miles = Math.floor(num / 1000);
-      const resto = num % 1000;
-      return (miles === 1 ? 'MIL' : convertir(miles) + ' MIL') + (resto ? ' ' + convertir(resto) : '');
-    }
-    const millones = Math.floor(num / 1000000);
-    const resto = num % 1000000;
-    return (millones === 1 ? 'UN MILLÓN' : convertir(millones) + ' MILLONES') + (resto ? ' ' + convertir(resto) : '');
-  }
-
-  return convertir(valor) + ' PESOS';
-}
-
 
     async function generarCertificado() {
       const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
@@ -100,16 +89,8 @@
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
       const texto = `Sabaneta, ${fechaActual}
-      
-
-
-
-
-      
 
 A QUIEN PUEDA INTERESAR
-
-
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
@@ -129,19 +110,15 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
       const page = pdfDoc.getPages()[0];
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      const lines = texto.split('\n');
-      let y = 690; // Ajusta según márgenes
-
-      for (const line of lines) {
-        page.drawText(line, {
-          x: 50,
-          y,
-          size: 10,
-          font,
-          color: PDFLib.rgb(0, 0, 0),
-        });
-        y -= 14; // Espacio entre líneas
-      }
+      page.drawText(texto, {
+        x: 50,
+        y: 620,
+        size: 10,
+        font,
+        lineHeight: 14,
+        color: PDFLib.rgb(0, 0, 0),
+        maxWidth: 500,
+      });
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
