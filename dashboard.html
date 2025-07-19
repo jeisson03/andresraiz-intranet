@@ -15,7 +15,8 @@
       <p><strong>Cédula:</strong> <span id="cedula"></span></p>
       <p><strong>Cargo:</strong> <span id="cargo"></span></p>
       <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
-      <!-- <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones"></span> días</p> -->
+      <p><strong>Días disfrutados:</strong> <span id="vacacionesTomadas"></span></p>
+      <p><strong>Días disponibles:</strong> <span id="vacacionesDisponibles"></span></p>
     </div>
 
     <div class="btn-group">
@@ -56,10 +57,12 @@
       const años = hoy.getFullYear() - fechaIngreso.getFullYear();
       const meses = hoy.getMonth() - fechaIngreso.getMonth();
       const totalMeses = (años * 12) + meses;
-      const diasAcumulados = Math.floor((15 / 12) * totalMeses);
-      const diasTomados = empleado.vacaciones || 0;
-      const diasVacacionesDisponibles = diasAcumulados - diasTomados;
-      // Se calcula pero no se muestra
+      const acumuladas = Math.floor((15 / 12) * totalMeses);
+      const tomadas = empleado.vacaciones || 0;
+      const disponibles = Math.max(acumuladas - tomadas, 0);
+
+      document.getElementById('vacacionesTomadas').innerText = tomadas;
+      document.getElementById('vacacionesDisponibles').innerText = disponibles;
     }
 
     function descargarColilla() {
