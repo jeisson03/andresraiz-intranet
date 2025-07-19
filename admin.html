@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agregar empleado</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="panel">
+    <img src="assets/logo.png" class="logo" alt="Logo">
+    <h2>Agregar nuevo empleado</h2>
+
+    <form id="form-empleado" style="display:block">
+      <label>Nombre completo:<br><input type="text" name="nombre" required></label><br>
+      <label>Cédula:<br><input type="text" name="cedula" required></label><br>
+      <label>Cargo:<br><input type="text" name="cargo" required></label><br>
+      <label>Fecha de ingreso:<br><input type="text" name="ingreso" placeholder="ej: 1 de febrero de 2023" required></label><br>
+      <label>Salario:<br><input type="number" name="salario" required></label><br>
+      <label>Auxilio de transporte:<br><input type="number" name="transporte" required></label><br>
+      <label>Rodamiento:<br><input type="number" name="rodamiento" required></label><br>
+      <label>Promedio comisiones:<br><input type="number" name="comisiones" required></label><br>
+      <label>Días de vacaciones tomados (si aplica):<br><input type="number" name="vacaciones" value="0"></label><br>
+      <label>Usuario:<br><input type="text" name="usuario" required></label><br>
+      <label>Contraseña:<br><input type="password" name="clave" required></label><br>
+      <button type="submit">Guardar empleado</button>
+    </form>
+
+    <p><a href="index.html">← Volver al inicio</a></p>
+  </div>
+
+  <script>
+    document.getElementById("form-empleado").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const empleado = {};
+      formData.forEach((valor, campo) => {
+        empleado[campo] = campo === 'vacaciones' || campo === 'salario' || campo === 'transporte' || campo === 'rodamiento' || campo === 'comisiones' ? Number(valor) : valor;
+      });
+
+      const empleados = JSON.parse(localStorage.getItem("empleados")) || [];
+      empleados.push(empleado);
+      localStorage.setItem("empleados", JSON.stringify(empleados));
+
+      alert("Empleado guardado exitosamente.");
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
 
