@@ -18,12 +18,12 @@
     "nombre": "RENZON ABRIL",
     "cedula": "1110606967",
     "cargo": "AUXILIAR DE MANTENIMIENTO",
-    "ingreso": "2024-18-07",
+    "ingreso": "2024-16-05",
     "salario": 1423500,
     "transporte": 200000,
     "rodamiento": 350000,
     "comisiones": 2400000,
-    "vacaciones": 8
+    "vacaciones": "8"
   },
   {
     "usuario": "json",
