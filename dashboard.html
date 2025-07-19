@@ -51,8 +51,9 @@
       const mes = new Date().toISOString().slice(0, 7);
       const path = `colillas/${empleado.cedula}/${mes}.pdf`;
       const visor = document.getElementById("visor");
-      visor.src = path;
+      visor.removeAttribute('src');
       visor.style.display = "block";
+      setTimeout(() => visor.src = path, 100);
     }
 
     function cerrarSesion() {
@@ -99,7 +100,7 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
 
       page.drawText(texto, {
         x: 50,
-        y: 680,
+        y: 620, // Ajuste para dejar márgenes arriba
         size: 10,
         font,
         lineHeight: 14,
@@ -111,8 +112,9 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const visor = document.getElementById('visor');
-      visor.src = url;
+      visor.removeAttribute('src');
       visor.style.display = 'block';
+      setTimeout(() => visor.src = url, 100);
     }
   </script>
 </body>
