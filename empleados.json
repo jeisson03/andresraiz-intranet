@@ -35,7 +35,7 @@
     "salario": 1423500,
     "transporte": 200000,
     "rodamiento": 350000,
-    "vacaciones": 8
+    "vacaciones": "8"
   }
  
 ]
