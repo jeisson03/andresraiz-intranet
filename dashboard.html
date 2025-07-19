@@ -15,9 +15,7 @@
       <p><strong>Cédula:</strong> <span id="cedula"></span></p>
       <p><strong>Cargo:</strong> <span id="cargo"></span></p>
       <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
-      <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones_acumuladas"></span> días</p>
-      <p><strong>Vacaciones disfrutadas:</strong> <span id="vacaciones_tomadas"></span> días</p>
-      <p><strong>Vacaciones disponibles:</strong> <span id="vacaciones_disponibles"></span> días</p>
+      <!-- <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones"></span> días</p> -->
     </div>
 
     <div class="btn-group">
@@ -30,12 +28,8 @@
     <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
   </div>
 
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
-    const empleado = JSON.parse(localStorage.getItem('empleado'));
-    if (!empleado) {
-      window.location.href = "index.html";
-    }
-
     function normalizarFecha(fechaTexto) {
       const meses = {
         'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
@@ -47,22 +41,26 @@
       return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
     }
 
-    document.getElementById('nombre').innerText = empleado.nombre;
-    document.getElementById('cedula').innerText = empleado.cedula;
-    document.getElementById('cargo').innerText = empleado.cargo;
-    document.getElementById('ingreso').innerText = empleado.ingreso;
+    const empleado = JSON.parse(localStorage.getItem('empleado'));
+    if (!empleado) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById('nombre').innerText = empleado.nombre;
+      document.getElementById('cedula').innerText = empleado.cedula;
+      document.getElementById('cargo').innerText = empleado.cargo;
+      document.getElementById('ingreso').innerText = empleado.ingreso;
 
-    const fechaNormalizada = normalizarFecha(empleado.ingreso);
-    const fechaIngreso = new Date(fechaNormalizada);
-    const hoy = new Date();
-    const totalMeses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
-    const vacacionesAcumuladas = Math.floor((15 / 12) * totalMeses); // 15 días al año
-    const vacacionesTomadas = empleado.vacaciones || 0;
-    const vacacionesDisponibles = Math.max(vacacionesAcumuladas - vacacionesTomadas, 0);
-
-    document.getElementById('vacaciones_acumuladas').innerText = vacacionesAcumuladas;
-    document.getElementById('vacaciones_tomadas').innerText = vacacionesTomadas;
-    document.getElementById('vacaciones_disponibles').innerText = vacacionesDisponibles;
+      const fechaNormalizada = normalizarFecha(empleado.ingreso);
+      const fechaIngreso = new Date(fechaNormalizada);
+      const hoy = new Date();
+      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+      const meses = hoy.getMonth() - fechaIngreso.getMonth();
+      const totalMeses = (años * 12) + meses;
+      const diasAcumulados = Math.floor((15 / 12) * totalMeses);
+      const diasTomados = empleado.vacaciones || 0;
+      const diasVacacionesDisponibles = diasAcumulados - diasTomados;
+      // Se calcula pero no se muestra
+    }
 
     function descargarColilla() {
       const mes = new Date().toISOString().slice(0, 7);
@@ -76,6 +74,62 @@
     function cerrarSesion() {
       localStorage.removeItem('empleado');
       window.location.href = "index.html";
+    }
+
+    function numeroATexto(valor) {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+    }
+
+    function enLetras(num) {
+      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+      const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+      return words;
+    }
+
+    async function generarCertificado() {
+      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+      const hoy = new Date();
+      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const texto = `Sabaneta, ${fechaActual}
+
+A QUIEN PUEDA INTERESAR
+
+ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
+${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
+nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
+mediante un contrato a término indefinido, con un salario básico de:
+
+${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})
+
+Cualquier información o requerimiento adicional con gusto será atendido por medio del
+correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
+
+      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+      const page = pdfDoc.getPages()[0];
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+      page.drawText(texto, {
+        x: 50,
+        y: 620,
+        size: 10,
+        font,
+        lineHeight: 14,
+        color: PDFLib.rgb(0, 0, 0),
+        maxWidth: 500,
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const visor = document.getElementById('visor');
+      visor.removeAttribute('src');
+      visor.style.display = 'block';
+      setTimeout(() => visor.src = url, 100);
     }
   </script>
 </body>
