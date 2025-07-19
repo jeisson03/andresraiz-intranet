@@ -27,35 +27,39 @@
     <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
   </div>
 
-  <script>
-    const empleado = JSON.parse(localStorage.getItem('empleado'));
-    if (!empleado) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById('nombre').innerText = empleado.nombre;
-      document.getElementById('cedula').innerText = empleado.cedula;
-      document.getElementById('cargo').innerText = empleado.cargo;
-      document.getElementById('ingreso').innerText = empleado.ingreso;
+<script>
+  const empleado = JSON.parse(localStorage.getItem('empleado'));
+  if (!empleado) {
+    window.location.href = "index.html";
+  } else {
+    document.getElementById('nombre').innerText = empleado.nombre;
+    document.getElementById('cedula').innerText = empleado.cedula;
+    document.getElementById('cargo').innerText = empleado.cargo;
+    document.getElementById('ingreso').innerText = empleado.ingreso;
 
-      const fechaIngreso = new Date(empleado.ingreso);
-      const hoy = new Date();
-      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
-      const meses = hoy.getMonth() - fechaIngreso.getMonth();
-      const totalMeses = (años * 12) + meses;
-      const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
-      document.getElementById('vacaciones').innerText = diasVacaciones;
-    }
+    const fechaIngreso = new Date(empleado.ingreso);
+    const hoy = new Date();
+    const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+    const meses = hoy.getMonth() - fechaIngreso.getMonth();
+    const totalMeses = (años * 12) + meses;
+    const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
+    document.getElementById('vacaciones').innerText = diasVacaciones;
+  }
 
-    function descargarColilla() {
-      const mes = new Date().toISOString().slice(0, 7);
-      const path = colillas/${empleado.cedula}/${mes}.pdf;
-      document.getElementById("visor").src = path;
-      document.getElementById("visor").style.display = "block";
-    }
+  function descargarColilla() {
+    const mes = new Date().toISOString().slice(0, 7);
+    const path = `colillas/${empleado.cedula}/${mes}.pdf`;
+    const visor = document.getElementById("visor");
+    visor.src = path;
+    visor.style.display = "block";
+  }
 
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
-      window.location.href = "index.html";
+  function cerrarSesion() {
+    localStorage.removeItem('empleado');
+    window.location.href = "index.html";
+  }
+</script>
+
     }
 
     function numeroATexto(valor) {
