@@ -65,40 +65,9 @@
       return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
     }
 
-    function enLetras(valor) {
-      const unidades = ["", "UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-      const decenas = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-      const centenas = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
-
-      const n = parseInt(valor);
-      if (isNaN(n) || n === 0) return "CERO";
-
-      const millones = Math.floor(n / 1000000);
-      const miles = Math.floor((n % 1000000) / 1000);
-      const resto = n % 1000;
-
-      function convertirGrupo(num) {
-        const c = Math.floor(num / 100);
-        const d = Math.floor((num % 100) / 10);
-        const u = num % 10;
-
-        let resultado = centenas[c];
-        if (d === 1 && u > 0) {
-          resultado += " DIECI" + unidades[u].toLowerCase();
-        } else if (d === 2 && u > 0) {
-          resultado += " VEINTI" + unidades[u].toLowerCase();
-        } else {
-          resultado += (decenas[d] ? " " + decenas[d] : "") + (u ? " Y " + unidades[u] : "");
-        }
-        return resultado.trim();
-      }
-
-      let texto = "";
-      if (millones > 0) texto += convertirGrupo(millones) + " MILLONES ";
-      if (miles > 0) texto += convertirGrupo(miles) + " MIL ";
-      if (resto > 0) texto += convertirGrupo(resto);
-
-      return texto.trim();
+    function enLetras(num) {
+      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+      return formatter.format(num).replace(/\./g, '').replace('$', '').trim();
     }
 
     async function generarCertificado() {
@@ -111,32 +80,36 @@
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cédula de ciudadanía No. ${cedula} labora en
+${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
 
-${enLetras(salario)} (${numeroATexto(salario)}), con auxilio de transporte equivalente a
-${enLetras(transporte)} (${numeroATexto(transporte)}), un auxilio de rodamiento equivalente a
-${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), más comisiones no constitutivas de salario con
-promedio de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).
+${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
-correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761.`;
+correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
       const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
       const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
       const page = pdfDoc.getPages()[0];
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      page.drawText(texto, {
-        x: 50,
-        y: 690,
-        size: 10,
-        font,
-        lineHeight: 14,
-        color: PDFLib.rgb(0, 0, 0),
-        maxWidth: 500,
-      });
+      const lines = texto.split('\n');
+      let y = 690; // Ajusta según márgenes
+
+      for (const line of lines) {
+        page.drawText(line, {
+          x: 50,
+          y,
+          size: 10,
+          font,
+          color: PDFLib.rgb(0, 0, 0),
+        });
+        y -= 14; // Espacio entre líneas
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
