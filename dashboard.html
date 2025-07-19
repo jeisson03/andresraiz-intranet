@@ -29,6 +29,38 @@
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
+    function numeroEnLetras(num) {
+      const UNIDADES = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+      const DECENAS = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+      const CENTENAS = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+
+      function convertir(num) {
+        if (num === 0) return "CERO";
+        let millones = Math.floor(num / 1000000);
+        let miles = Math.floor((num % 1000000) / 1000);
+        let cientos = num % 1000;
+
+        let texto = "";
+
+        if (millones > 0) texto += convertir(millones) + " MILLONES ";
+        if (miles > 0) texto += convertir(miles) + " MIL ";
+        if (cientos > 0) {
+          let c = Math.floor(cientos / 100);
+          let d = Math.floor((cientos % 100) / 10);
+          let u = cientos % 10;
+          if (c === 1 && d === 0 && u === 0) {
+            texto += "CIEN";
+          } else {
+            texto += CENTENAS[c] + (d > 0 ? " " + DECENAS[d] : "") + (u > 0 ? " " + UNIDADES[u] : "");
+          }
+        }
+
+        return texto.trim();
+      }
+
+      return convertir(num);
+    }
+
     function normalizarFecha(fechaTexto) {
       const meses = {
         'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
@@ -36,7 +68,7 @@
         'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
       };
       const partes = fechaTexto.toLowerCase().split(' de ');
-      if (partes.length !== 3 || !meses[partes[1]]) return null;
+      if (partes.length !== 3) return null;
       return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
     }
 
@@ -50,13 +82,12 @@
       document.getElementById('ingreso').innerText = empleado.ingreso;
 
       const fechaNormalizada = normalizarFecha(empleado.ingreso);
-      const fechaIngreso = new Date(fechaNormalizada);
-      if (!isNaN(fechaIngreso)) {
+      if (fechaNormalizada) {
+        const fechaIngreso = new Date(fechaNormalizada);
         const hoy = new Date();
-        const años = hoy.getFullYear() - fechaIngreso.getFullYear();
-        const meses = hoy.getMonth() - fechaIngreso.getMonth();
-        const totalMeses = (años * 12) + meses;
-        const diasVacaciones = Math.floor((15 / 12) * totalMeses) - (empleado.vacaciones || 0);
+        const diferencia = hoy.getTime() - fechaIngreso.getTime();
+        const diasTotales = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+        const diasVacaciones = Math.floor((15 / 360) * diasTotales) - (empleado.vacaciones || 0);
         document.getElementById('vacaciones').innerText = diasVacaciones;
       } else {
         document.getElementById('vacaciones').innerText = "0";
@@ -77,29 +108,10 @@
       window.location.href = "index.html";
     }
 
-    function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-      }).format(valor);
-    }
-
-    function enLetras(num) {
-      const formatter = new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-      });
-      return formatter.format(num).replace(/\./g, '').replace('$', '').trim().toUpperCase();
-    }
-
     async function generarCertificado() {
       const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
       const hoy = new Date();
-      const fechaActual = hoy.toLocaleDateString("es-CO", {
-        year: 'numeric', month: 'long', day: 'numeric'
-      });
+      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
       const texto = `Sabaneta, ${fechaActual}
 
@@ -110,10 +122,10 @@ ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
 
-${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)}).
+${numeroEnLetras(salario)} (${salario.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${numeroEnLetras(transporte)} (${transporte.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${numeroEnLetras(rodamiento)} (${rodamiento.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${numeroEnLetras(comisiones)} (${comisiones.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })})
 
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
@@ -125,10 +137,10 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
 
       page.drawText(texto, {
         x: 50,
-        y: 720,
+        y: 620,
         size: 10,
         font,
-        lineHeight: 18,
+        lineHeight: 14,
         color: PDFLib.rgb(0, 0, 0),
         maxWidth: 500,
       });
