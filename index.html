@@ -20,22 +20,35 @@
 
   <script>
     async function obtenerDatos() {
-      const res = await fetch('empleados.json');
-      return await res.json();
+      try {
+        const res = await fetch('empleados.json');
+        if (!res.ok) throw new Error('Archivo no encontrado');
+        const datos = await res.json();
+        console.log("✅ empleados.json cargado:", datos);
+        return datos;
+      } catch (error) {
+        console.error("❌ Error al cargar empleados.json:", error);
+        document.getElementById('error').innerText = 'Error al cargar datos. Verifique conexión.';
+        return [];
+      }
     }
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+
       const user = document.getElementById('usuario').value.trim().toLowerCase();
       const pass = document.getElementById('clave').value.trim();
+      console.log("🔐 Intentando login:", user, pass);
 
       const empleados = await obtenerDatos();
       const empleado = empleados.find(emp => emp.usuario === user && emp.clave === pass);
 
       if (empleado) {
+        console.log("✅ Login exitoso para:", empleado.nombre);
         localStorage.setItem('empleado', JSON.stringify(empleado));
         window.location.href = 'dashboard.html';
       } else {
+        console.warn("❌ Usuario o contraseña incorrectos.");
         document.getElementById('error').innerText = 'Usuario o contraseña incorrectos.';
       }
     });
