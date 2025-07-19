@@ -2,165 +2,51 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel - Andrés Raíz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administrador - Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 30px auto; }
+    h2 { text-align: center; }
+    input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px 20px; margin-top: 10px; }
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-  <div class="panel">
-    <img src="assets/logo.png" class="logo" alt="Logo"/>
-    <h2>Bienvenido, <span id="nombre"></span></h2>
+  <h2>Administrador - Agregar empleados</h2>
 
-    <div class="info-box">
-      <p><strong>Cédula:</strong> <span id="cedula"></span></p>
-      <p><strong>Cargo:</strong> <span id="cargo"></span></p>
-      <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
-      <p><strong>Vacaciones acumuladas:</strong> <span id="vacaciones"></span> días</p>
-    </div>
-
-    <div class="btn-group">
-      <button onclick="descargarColilla()">Ver colilla de este mes</button>
-      <button onclick="generarCertificado()">Generar certificado laboral</button>
-      <button onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
-
-    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
+  <div id="login">
+    <p><strong>Contraseña de administrador:</strong></p>
+    <input type="password" id="adminPass" placeholder="Ingrese contraseña">
+    <button onclick="verificarAcceso()">Entrar</button>
   </div>
 
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <div id="panel" class="hidden">
+    <textarea id="jsonEmpleados" rows="15" placeholder='Pegue aquí el JSON de empleados'></textarea>
+    <button onclick="guardarJSON()">Guardar empleados</button>
+    <p id="mensaje" style="color: green;"></p>
+  </div>
+
   <script>
-    function numeroEnLetras(num) {
-      const UNIDADES = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-      const DECENAS = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-      const CENTENAS = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
-
-      function convertir(num) {
-        if (num === 0) return "CERO";
-        let millones = Math.floor(num / 1000000);
-        let miles = Math.floor((num % 1000000) / 1000);
-        let cientos = num % 1000;
-
-        let texto = "";
-
-        if (millones > 0) texto += convertir(millones) + " MILLONES ";
-        if (miles > 0) texto += convertir(miles) + " MIL ";
-        if (cientos > 0) {
-          let c = Math.floor(cientos / 100);
-          let d = Math.floor((cientos % 100) / 10);
-          let u = cientos % 10;
-          if (c === 1 && d === 0 && u === 0) {
-            texto += "CIEN";
-          } else {
-            texto += CENTENAS[c] + (d > 0 ? " " + DECENAS[d] : "") + (u > 0 ? " " + UNIDADES[u] : "");
-          }
-        }
-
-        return texto.trim();
-      }
-
-      return convertir(num);
-    }
-
-    function normalizarFecha(fechaTexto) {
-      const meses = {
-        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
-        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
-        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
-      };
-      const partes = fechaTexto.toLowerCase().split(' de ');
-      if (partes.length !== 3) return null;
-      return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
-    }
-
-    const empleado = JSON.parse(localStorage.getItem('empleado'));
-    if (!empleado) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById('nombre').innerText = empleado.nombre;
-      document.getElementById('cedula').innerText = empleado.cedula;
-      document.getElementById('cargo').innerText = empleado.cargo;
-      document.getElementById('ingreso').innerText = empleado.ingreso;
-
-      const fechaNormalizada = normalizarFecha(empleado.ingreso);
-      if (fechaNormalizada) {
-        const fechaIngreso = new Date(fechaNormalizada);
-        const hoy = new Date();
-        const diferencia = hoy.getTime() - fechaIngreso.getTime();
-        const diasTotales = Math.floor(diferencia / (1000 * 60 * 60 * 24));
-        const diasVacaciones = Math.floor((15 / 360) * diasTotales) - (empleado.vacaciones || 0);
-        document.getElementById('vacaciones').innerText = diasVacaciones;
+    function verificarAcceso() {
+      const pass = document.getElementById("adminPass").value;
+      if (pass === "andresadmin") {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("panel").classList.remove("hidden");
       } else {
-        document.getElementById('vacaciones').innerText = "0";
+        alert("Contraseña incorrecta");
       }
     }
 
-    function descargarColilla() {
-      const mes = new Date().toISOString().slice(0, 7);
-      const path = `colillas/${empleado.cedula}/${mes}.pdf`;
-      const visor = document.getElementById("visor");
-      visor.removeAttribute('src');
-      visor.style.display = "block";
-      setTimeout(() => visor.src = path, 100);
-    }
-
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
-      window.location.href = "index.html";
-    }
-
-    async function generarCertificado() {
-      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-      const hoy = new Date();
-      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-
-      const texto = `Sabaneta, ${fechaActual}
-
-      
-
-
-      
-
-A QUIEN PUEDA INTERESAR
-
-
-
-
-ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:
-
-
-${numeroEnLetras(salario)} (${salario.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${numeroEnLetras(transporte)} (${transporte.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${numeroEnLetras(rodamiento)} (${rodamiento.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${numeroEnLetras(comisiones)} (${comisiones.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })})
-
-Cualquier información o requerimiento adicional con gusto será atendido por medio del
-correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
-
-      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-      const page = pdfDoc.getPages()[0];
-      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-
-      page.drawText(texto, {
-        x: 50,
-        y: 620,
-        size: 10,
-        font,
-        lineHeight: 14,
-        color: PDFLib.rgb(0, 0, 0),
-        maxWidth: 500,
-      });
-
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const visor = document.getElementById('visor');
-      visor.removeAttribute('src');
-      visor.style.display = 'block';
-      setTimeout(() => visor.src = url, 100);
+    function guardarJSON() {
+      try {
+        const datos = JSON.parse(document.getElementById("jsonEmpleados").value);
+        localStorage.setItem("empleadosData", JSON.stringify(datos));
+        document.getElementById("mensaje").innerText = "Datos guardados correctamente.";
+      } catch (e) {
+        alert("El JSON no es válido");
+      }
     }
   </script>
 </body>
