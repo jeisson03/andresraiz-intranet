@@ -10,42 +10,45 @@
   <div class="login-container">
     <img src="assets/logo.png" alt="Logo" class="logo">
     <h2>Intranet - Andrés Raíz</h2>
+
     <form id="loginForm">
       <input type="text" id="usuario" placeholder="Usuario" required>
       <input type="password" id="clave" placeholder="Contraseña" required>
       <button type="submit">Ingresar</button>
     </form>
+
     <p id="error" class="error-msg"></p>
   </div>
 
   <script>
-    // 👉 Paso 1: Obtener los empleados desde tu Google Sheets (privado)
+    const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbz-TSd1kzCFyuT1NlIrowwxRZ_bieLjW5Vxeys7Wj73etvDeh34ThpBH0Zee2uI5qFS/exec";
+
     async function obtenerDatos() {
       try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbz-TSd1kzCFyuT1NlIrowwxRZ_bieLjW5Vxeys7Wj73etvDeh34ThpBH0Zee2uI5qFS/exec");
-        if (!res.ok) throw new Error("No se pudo acceder al script");
+        const res = await fetch(URL_GOOGLE_SHEETS);
+        if (!res.ok) throw new Error("No se pudo obtener los datos");
         const datos = await res.json();
-        console.log("✅ Datos desde Google Sheets:", datos);
+        console.log("✅ Datos cargados desde Google Sheets:", datos);
         return datos;
       } catch (error) {
-        console.error("❌ Error al obtener datos:", error);
-        document.getElementById("error").innerText = "Error al cargar empleados.";
+        console.error("❌ Error al obtener los datos:", error);
+        document.getElementById("error").innerText = "No se pudieron cargar los datos. Intenta más tarde.";
         return [];
       }
     }
 
-    // 👉 Paso 2: Lógica del formulario de inicio de sesión
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const user = document.getElementById('usuario').value.trim().toLowerCase();
       const pass = document.getElementById('clave').value.trim();
 
       const empleados = await obtenerDatos();
-      const empleado = empleados.find(emp => emp.usuario?.toLowerCase() === user && emp.clave === pass);
+      const empleado = empleados.find(emp =>
+        emp.usuario?.toLowerCase() === user && emp.clave === pass
+      );
 
       if (empleado) {
-        console.log("✅ Login exitoso para:", empleado.nombre);
+        console.log("✅ Login correcto:", empleado.nombre);
         localStorage.setItem('empleado', JSON.stringify(empleado));
         window.location.href = 'dashboard.html';
       } else {
