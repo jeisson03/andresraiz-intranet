@@ -19,29 +19,30 @@
   </div>
 
   <script>
+    // 👉 Paso 1: Obtener los empleados desde tu Google Sheets (privado)
     async function obtenerDatos() {
       try {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbz265nBZZwXbI33WDrNAGIRTOEYs3d-kyRCojmBVoX150FSOv8bv2G8VFPnXZwmOd4O/exec');
-        if (!res.ok) throw new Error('No se pudo acceder a los datos');
+        const res = await fetch("https://script.google.com/macros/s/AKfycbz265nBZZwXbI33WDrNAGIRTOEYs3d-kyRCojmBVoX150FSOv8bv2G8VFPnXZwmOd4O/exec");
+        if (!res.ok) throw new Error("No se pudo acceder al script");
         const datos = await res.json();
-        console.log("✅ Datos cargados desde Google Sheets:", datos);
+        console.log("✅ Datos desde Google Sheets:", datos);
         return datos;
       } catch (error) {
-        console.error("❌ Error cargando desde Google Sheets:", error);
-        document.getElementById('error').innerText = 'Error al conectar con los datos.';
+        console.error("❌ Error al obtener datos:", error);
+        document.getElementById("error").innerText = "Error al cargar empleados.";
         return [];
       }
     }
 
+    // 👉 Paso 2: Lógica del formulario de inicio de sesión
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const user = document.getElementById('usuario').value.trim().toLowerCase();
       const pass = document.getElementById('clave').value.trim();
-      console.log("🔐 Intentando login:", user, pass);
 
       const empleados = await obtenerDatos();
-      const empleado = empleados.find(emp => emp.usuario === user && emp.clave === pass);
+      const empleado = empleados.find(emp => emp.usuario?.toLowerCase() === user && emp.clave === pass);
 
       if (empleado) {
         console.log("✅ Login exitoso para:", empleado.nombre);
