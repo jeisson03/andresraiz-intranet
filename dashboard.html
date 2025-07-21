@@ -25,17 +25,20 @@
       <button onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
 
-    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
+    <iframe id="visor" style="display:none; margin-top: 20px;" width="100%" height="500px"></iframe>
   </div>
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
     function normalizarFecha(fechaTexto) {
-      if (!fechaTexto || typeof fechaTexto !== 'string') return fechaTexto;
-      const partes = fechaTexto.split(" ");
-      if (partes.length === 3) return fechaTexto; // ya está en texto
-      const fecha = new Date(fechaTexto);
-      return fecha.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+      const meses = {
+        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+      };
+      const partes = fechaTexto.toLowerCase().split(' de ');
+      if (partes.length !== 3) return fechaTexto;
+      return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
     }
 
     const empleado = JSON.parse(localStorage.getItem('empleado'));
@@ -45,15 +48,16 @@
       document.getElementById('nombre').innerText = empleado.nombre;
       document.getElementById('cedula').innerText = empleado.cedula;
       document.getElementById('cargo').innerText = empleado.cargo;
-      document.getElementById('ingreso').innerText = normalizarFecha(empleado.ingreso);
+      document.getElementById('ingreso').innerText = empleado.ingreso;
 
-      const fechaIngreso = new Date(empleado.ingreso);
+      const fechaNormalizada = normalizarFecha(empleado.ingreso);
+      const fechaIngreso = new Date(fechaNormalizada);
       const hoy = new Date();
       const años = hoy.getFullYear() - fechaIngreso.getFullYear();
       const meses = hoy.getMonth() - fechaIngreso.getMonth();
       const totalMeses = (años * 12) + meses;
       const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = parseInt(empleado.vacaciones || 0);
+      const tomadas = empleado.vacaciones || 0;
       const disponibles = Math.max(acumuladas - tomadas, 0);
 
       document.getElementById('vacacionesTomadas').innerText = tomadas;
@@ -75,50 +79,39 @@
     }
 
     function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-      }).format(valor);
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
     }
 
-    function enLetras(num) {
-      const unidades = ['CERO', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
-      const decenas = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
-      const decenas2 = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-      const centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+    function enLetras(valor) {
+      const unidades = ["", "UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+      const decenas = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+      const centenas = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
 
-      const convertirGrupo = (n) => {
-        let output = '';
-        const c = Math.floor(n / 100);
-        const d = Math.floor((n % 100) / 10);
-        const u = n % 10;
+      valor = Math.floor(valor);
+      if (valor === 0) return "CERO PESOS";
 
-        if (n === 0) return '';
-        if (n === 100) return 'CIEN';
-        if (c) output += centenas[c] + ' ';
-        if (d === 1) {
-          output += decenas[u] || decenas[0];
-        } else if (d === 2 && u > 0) {
-          output += 'VEINTI' + unidades[u].toLowerCase();
+      const partes = [];
+      if (valor >= 1000000) {
+        const millones = Math.floor(valor / 1000000);
+        partes.push(`${enLetras(millones)} MILLONES`);
+        valor %= 1000000;
+      }
+      if (valor >= 1000) {
+        const miles = Math.floor(valor / 1000);
+        if (miles === 1) {
+          partes.push("MIL");
         } else {
-          if (d) output += decenas2[d];
-          if (d && u) output += ' Y ';
-          if (u) output += unidades[u];
+          partes.push(`${enLetras(miles)} MIL`);
         }
-        return output.trim();
-      };
+        valor %= 1000;
+      }
+      if (valor > 0) {
+        if (valor < 10) partes.push(unidades[valor]);
+        else if (valor < 100) partes.push(decenas[Math.floor(valor / 10)] + (valor % 10 !== 0 ? ` Y ${unidades[valor % 10]}` : ""));
+        else partes.push(centenas[Math.floor(valor / 100)] + (valor % 100 !== 0 ? ` ${enLetras(valor % 100)}` : ""));
+      }
 
-      const millones = Math.floor(num / 1000000);
-      const miles = Math.floor((num % 1000000) / 1000);
-      const cientos = num % 1000;
-
-      let resultado = '';
-      if (millones) resultado += convertirGrupo(millones) + ' MILLONES ';
-      if (miles) resultado += convertirGrupo(miles) + ' MIL ';
-      if (cientos || (!millones && !miles)) resultado += convertirGrupo(cientos);
-
-      return resultado.trim() + ' PESOS';
+      return partes.join(" ") + " PESOS";
     }
 
     async function generarCertificado() {
@@ -126,20 +119,14 @@
       const hoy = new Date();
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const texto = `Sabaneta, ${fechaActual}
-
-A QUIEN PUEDA INTERESAR
-
-ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
+      const texto = `Sabaneta, ${fechaActual}\n\n\n\nA QUIEN PUEDA INTERESAR\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${normalizarFecha(ingreso)} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:
-
-${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
-
+nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
+mediante un contrato a término indefinido, con un salario básico de:\n
+${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
@@ -161,10 +148,17 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
+
       const visor = document.getElementById('visor');
-      visor.removeAttribute('src');
       visor.style.display = 'block';
-      setTimeout(() => visor.src = url, 100);
+      visor.src = url;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Certificado_${cedula}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
