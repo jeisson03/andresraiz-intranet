@@ -22,7 +22,7 @@
     // 👉 Paso 1: Obtener los empleados desde tu Google Sheets (privado)
     async function obtenerDatos() {
       try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbz265nBZZwXbI33WDrNAGIRTOEYs3d-kyRCojmBVoX150FSOv8bv2G8VFPnXZwmOd4O/exec");
+        const res = await fetch("https://script.google.com/macros/s/AKfycbz-TSd1kzCFyuT1NlIrowwxRZ_bieLjW5Vxeys7Wj73etvDeh34ThpBH0Zee2uI5qFS/exec");
         if (!res.ok) throw new Error("No se pudo acceder al script");
         const datos = await res.json();
         console.log("✅ Datos desde Google Sheets:", datos);
