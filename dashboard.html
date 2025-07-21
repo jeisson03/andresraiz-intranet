@@ -30,6 +30,14 @@
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
+    function normalizarFecha(fechaTexto) {
+      if (!fechaTexto || typeof fechaTexto !== 'string') return fechaTexto;
+      const partes = fechaTexto.split(" ");
+      if (partes.length === 3) return fechaTexto; // ya está en texto
+      const fecha = new Date(fechaTexto);
+      return fecha.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
     const empleado = JSON.parse(localStorage.getItem('empleado'));
     if (!empleado) {
       window.location.href = "index.html";
@@ -37,18 +45,15 @@
       document.getElementById('nombre').innerText = empleado.nombre;
       document.getElementById('cedula').innerText = empleado.cedula;
       document.getElementById('cargo').innerText = empleado.cargo;
+      document.getElementById('ingreso').innerText = normalizarFecha(empleado.ingreso);
 
-      const fecha = new Date(empleado.ingreso);
-      const ingresoLegible = fecha.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-      document.getElementById('ingreso').innerText = ingresoLegible;
-
-      const fechaIngreso = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+      const fechaIngreso = new Date(empleado.ingreso);
       const hoy = new Date();
       const años = hoy.getFullYear() - fechaIngreso.getFullYear();
       const meses = hoy.getMonth() - fechaIngreso.getMonth();
       const totalMeses = (años * 12) + meses;
       const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = Number(empleado.vacaciones) || 0;
+      const tomadas = parseInt(empleado.vacaciones || 0);
       const disponibles = Math.max(acumuladas - tomadas, 0);
 
       document.getElementById('vacacionesTomadas').innerText = tomadas;
@@ -70,34 +75,50 @@
     }
 
     function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      }).format(valor);
     }
 
-    function enLetras(valor) {
-      const unidades = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-      const decenas = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-      const centenas = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+    function enLetras(num) {
+      const unidades = ['CERO', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+      const decenas = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+      const decenas2 = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+      const centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
 
-      if (valor === 0) return "CERO";
-      if (!valor) return "";
+      const convertirGrupo = (n) => {
+        let output = '';
+        const c = Math.floor(n / 100);
+        const d = Math.floor((n % 100) / 10);
+        const u = n % 10;
 
-      const num = valor.toString().padStart(6, '0');
-      const cent = parseInt(num.substring(0, 3));
-      const dec = parseInt(num.substring(3));
+        if (n === 0) return '';
+        if (n === 100) return 'CIEN';
+        if (c) output += centenas[c] + ' ';
+        if (d === 1) {
+          output += decenas[u] || decenas[0];
+        } else if (d === 2 && u > 0) {
+          output += 'VEINTI' + unidades[u].toLowerCase();
+        } else {
+          if (d) output += decenas2[d];
+          if (d && u) output += ' Y ';
+          if (u) output += unidades[u];
+        }
+        return output.trim();
+      };
 
-      const partes = [];
-      if (cent > 0) {
-        partes.push(`${centenas[Math.floor(cent / 100)]}`);
-        const decenasPart = cent % 100;
-        if (decenasPart > 0) partes.push(decenas[Math.floor((decenasPart) / 10)]);
-      }
-      if (dec > 0) {
-        partes.push(`${centenas[Math.floor(dec / 100)]}`);
-        const decenasPart = dec % 100;
-        if (decenasPart > 0) partes.push(decenas[Math.floor((decenasPart) / 10)]);
-      }
+      const millones = Math.floor(num / 1000000);
+      const miles = Math.floor((num % 1000000) / 1000);
+      const cientos = num % 1000;
 
-      return partes.filter(Boolean).join(" ");
+      let resultado = '';
+      if (millones) resultado += convertirGrupo(millones) + ' MILLONES ';
+      if (miles) resultado += convertirGrupo(miles) + ' MIL ';
+      if (cientos || (!millones && !miles)) resultado += convertirGrupo(cientos);
+
+      return resultado.trim() + ' PESOS';
     }
 
     async function generarCertificado() {
@@ -105,11 +126,21 @@
       const hoy = new Date();
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const texto = `Sabaneta, ${fechaActual}\n\n\n\nA QUIEN PUEDA INTERESAR\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
+      const texto = `Sabaneta, ${fechaActual}
+
+A QUIEN PUEDA INTERESAR
+
+ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:\n\n${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A\n${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO\nEQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n\nCualquier información o requerimiento adicional con gusto será atendido por medio del
+nuestra compañía desde el ${normalizarFecha(ingreso)} hasta la fecha bajo el cargo de ${cargo}
+mediante un contrato a término indefinido, con un salario básico de:
+
+${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
+
+Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
       const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
