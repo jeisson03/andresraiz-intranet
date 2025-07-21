@@ -10,50 +10,47 @@
   <div class="login-container">
     <img src="assets/logo.png" alt="Logo" class="logo">
     <h2>Intranet - Andrés Raíz</h2>
-
     <form id="loginForm">
       <input type="text" id="usuario" placeholder="Usuario" required>
       <input type="password" id="clave" placeholder="Contraseña" required>
       <button type="submit">Ingresar</button>
     </form>
-
     <p id="error" class="error-msg"></p>
   </div>
 
   <script>
-    const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbz-TSd1kzCFyuT1NlIrowwxRZ_bieLjW5Vxeys7Wj73etvDeh34ThpBH0Zee2uI5qFS/exec";
+    const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbz-TSd1kzCFyuT1NlIrowwxRZ_bieLjW5Vxeys7Wj73etvDeh34ThpBH0Zee2uI5qFS/exec";
 
     async function obtenerDatos() {
       try {
-        const res = await fetch(URL_GOOGLE_SHEETS);
-        if (!res.ok) throw new Error("No se pudo obtener los datos");
+        const res = await fetch(URL_GOOGLE_SHEET);
+        if (!res.ok) throw new Error('Error al conectar');
         const datos = await res.json();
-        console.log("✅ Datos cargados desde Google Sheets:", datos);
+        console.log("✅ Datos cargados:", datos);
         return datos;
-      } catch (error) {
-        console.error("❌ Error al obtener los datos:", error);
-        document.getElementById("error").innerText = "No se pudieron cargar los datos. Intenta más tarde.";
+      } catch (err) {
+        console.error("❌ Error:", err);
+        document.getElementById("error").innerText = "Error al conectar con la base de datos.";
         return [];
       }
     }
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const user = document.getElementById('usuario').value.trim().toLowerCase();
-      const pass = document.getElementById('clave').value.trim();
+      const user = document.getElementById("usuario").value.trim().toLowerCase();
+      const pass = document.getElementById("clave").value.trim();
 
       const empleados = await obtenerDatos();
-      const empleado = empleados.find(emp =>
-        emp.usuario?.toLowerCase() === user && emp.clave === pass
+      const empleado = empleados.find(emp => 
+        emp.usuario && emp.usuario.toLowerCase() === user && 
+        emp.clave && String(emp.clave).trim() === pass
       );
 
       if (empleado) {
-        console.log("✅ Login correcto:", empleado.nombre);
-        localStorage.setItem('empleado', JSON.stringify(empleado));
-        window.location.href = 'dashboard.html';
+        localStorage.setItem("empleado", JSON.stringify(empleado));
+        window.location.href = "dashboard.html";
       } else {
-        console.warn("❌ Usuario o contraseña incorrectos.");
-        document.getElementById('error').innerText = 'Usuario o contraseña incorrectos.';
+        document.getElementById("error").innerText = "Usuario o contraseña incorrectos.";
       }
     });
   </script>
