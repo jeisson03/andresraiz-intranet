@@ -25,7 +25,8 @@
       <button onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
 
-    <iframe id="visor" style="display:none; margin-top: 20px;" width="100%" height="500px"></iframe>
+    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
+    <a id="descargar" style="display:none;" download="certificado_laboral.pdf">Descargar certificado</a>
   </div>
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
@@ -57,7 +58,7 @@
       const meses = hoy.getMonth() - fechaIngreso.getMonth();
       const totalMeses = (años * 12) + meses;
       const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = empleado.vacaciones || 0;
+      const tomadas = parseInt(empleado.vacaciones || 0);
       const disponibles = Math.max(acumuladas - tomadas, 0);
 
       document.getElementById('vacacionesTomadas').innerText = tomadas;
@@ -82,36 +83,23 @@
       return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
     }
 
-    function enLetras(valor) {
-      const unidades = ["", "UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-      const decenas = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-      const centenas = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
-
-      valor = Math.floor(valor);
-      if (valor === 0) return "CERO PESOS";
-
-      const partes = [];
-      if (valor >= 1000000) {
-        const millones = Math.floor(valor / 1000000);
-        partes.push(`${enLetras(millones)} MILLONES`);
-        valor %= 1000000;
+    function enLetras(num) {
+      const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
+      const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+      const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+      const miles = Math.floor(num / 1000);
+      const resto = num % 1000;
+      const c = Math.floor(resto / 100);
+      const d = Math.floor((resto % 100) / 10);
+      const u = resto % 10;
+      let texto = '';
+      if (miles > 0) {
+        texto += (miles === 1 ? 'MIL' : enLetras(miles) + ' MIL') + ' ';
       }
-      if (valor >= 1000) {
-        const miles = Math.floor(valor / 1000);
-        if (miles === 1) {
-          partes.push("MIL");
-        } else {
-          partes.push(`${enLetras(miles)} MIL`);
-        }
-        valor %= 1000;
+      if (resto > 0) {
+        texto += `${centenas[c]} ${decenas[d]} ${unidades[u]}`;
       }
-      if (valor > 0) {
-        if (valor < 10) partes.push(unidades[valor]);
-        else if (valor < 100) partes.push(decenas[Math.floor(valor / 10)] + (valor % 10 !== 0 ? ` Y ${unidades[valor % 10]}` : ""));
-        else partes.push(centenas[Math.floor(valor / 100)] + (valor % 100 !== 0 ? ` ${enLetras(valor % 100)}` : ""));
-      }
-
-      return partes.join(" ") + " PESOS";
+      return texto.trim() + ' PESOS';
     }
 
     async function generarCertificado() {
@@ -119,14 +107,28 @@
       const hoy = new Date();
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const texto = `Sabaneta, ${fechaActual}\n\n\n\nA QUIEN PUEDA INTERESAR\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
+      const texto = `Sabaneta, ${fechaActual}
+
+
+      
+\n\n\n\nA QUIEN PUEDA INTERESAR
+
+
+
+\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:\n
-${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n
+mediante un contrato a término indefinido, con un salario básico de:
+
+
+\n
+${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
+${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
+EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
+
+
+
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
@@ -150,15 +152,13 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
       const url = URL.createObjectURL(blob);
 
       const visor = document.getElementById('visor');
+      const descargar = document.getElementById('descargar');
+
       visor.style.display = 'block';
       visor.src = url;
 
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Certificado_${cedula}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      descargar.style.display = 'inline-block';
+      descargar.href = url;
     }
   </script>
 </body>
