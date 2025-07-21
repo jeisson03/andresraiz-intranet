@@ -39,23 +39,20 @@
       document.getElementById('cargo').innerText = empleado.cargo;
 
       const fecha = new Date(empleado.ingreso);
-      const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO', opciones);
+      const ingresoLegible = fecha.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('ingreso').innerText = ingresoLegible;
 
+      const fechaIngreso = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
       const hoy = new Date();
-      const fechaIngreso = new Date(empleado.ingreso);
-      const totalMeses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
+      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+      const meses = hoy.getMonth() - fechaIngreso.getMonth();
+      const totalMeses = (años * 12) + meses;
       const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = parseInt(empleado.vacaciones) || 0;
+      const tomadas = Number(empleado.vacaciones) || 0;
       const disponibles = Math.max(acumuladas - tomadas, 0);
 
       document.getElementById('vacacionesTomadas').innerText = tomadas;
       document.getElementById('vacacionesDisponibles').innerText = disponibles;
-    }
-
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
-      window.location.href = "index.html";
     }
 
     function descargarColilla() {
@@ -67,84 +64,76 @@
       setTimeout(() => visor.src = path, 100);
     }
 
-    function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-      }).format(valor);
+    function cerrarSesion() {
+      localStorage.removeItem('empleado');
+      window.location.href = "index.html";
     }
 
-    function enLetras(num) {
-      const formatter = new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-      });
-      return formatter.format(num).replace(/\./g, '').replace('$', '').trim();
+    function numeroATexto(valor) {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+    }
+
+    function enLetras(valor) {
+      const unidades = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+      const decenas = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+      const centenas = ["", "CIEN", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+
+      if (valor === 0) return "CERO";
+      if (!valor) return "";
+
+      const num = valor.toString().padStart(6, '0');
+      const cent = parseInt(num.substring(0, 3));
+      const dec = parseInt(num.substring(3));
+
+      const partes = [];
+      if (cent > 0) {
+        partes.push(`${centenas[Math.floor(cent / 100)]}`);
+        const decenasPart = cent % 100;
+        if (decenasPart > 0) partes.push(decenas[Math.floor((decenasPart) / 10)]);
+      }
+      if (dec > 0) {
+        partes.push(`${centenas[Math.floor(dec / 100)]}`);
+        const decenasPart = dec % 100;
+        if (decenasPart > 0) partes.push(decenas[Math.floor((decenasPart) / 10)]);
+      }
+
+      return partes.filter(Boolean).join(" ");
     }
 
     async function generarCertificado() {
-      try {
-        const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-        const hoy = new Date();
-        const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-        const fechaIngresoLimpia = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+      const hoy = new Date();
+      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-        const texto = `Sabaneta, ${fechaActual}
-
-A QUIEN PUEDA INTERESAR
-
-ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
+      const texto = `Sabaneta, ${fechaActual}\n\n\n\nA QUIEN PUEDA INTERESAR\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${fechaIngresoLimpia} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:
-
-${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})
-
-Cualquier información o requerimiento adicional con gusto será atendido por medio del
+nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
+mediante un contrato a término indefinido, con un salario básico de:\n\n${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A\n${enLetras(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO\nEQUIVALENTE A ${enLetras(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
+PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n\nCualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
-        const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-        const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-        const page = pdfDoc.getPages()[0];
-        const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+      const page = pdfDoc.getPages()[0];
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-        page.drawText(texto, {
-          x: 50,
-          y: 620,
-          size: 10,
-          font,
-          lineHeight: 14,
-          color: PDFLib.rgb(0, 0, 0),
-          maxWidth: 500,
-        });
+      page.drawText(texto, {
+        x: 50,
+        y: 620,
+        size: 10,
+        font,
+        lineHeight: 14,
+        color: PDFLib.rgb(0, 0, 0),
+        maxWidth: 500,
+      });
 
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-
-        const visor = document.getElementById('visor');
-        visor.removeAttribute('src');
-        visor.style.display = 'block';
-
-        // Si está en celular, descarga en lugar de mostrar
-        if (/android|iphone|ipad|mobile/i.test(navigator.userAgent)) {
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = "certificado_laboral.pdf";
-          link.click();
-        } else {
-          setTimeout(() => visor.src = url, 100);
-        }
-
-      } catch (error) {
-        alert('Error generando el certificado.');
-        console.error(error);
-      }
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const visor = document.getElementById('visor');
+      visor.removeAttribute('src');
+      visor.style.display = 'block';
+      setTimeout(() => visor.src = url, 100);
     }
   </script>
 </body>
