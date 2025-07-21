@@ -32,14 +32,27 @@
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
     function normalizarFecha(fechaTexto) {
+      if (!fechaTexto) return new Date();
+
+      // Si ya es formato YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fechaTexto)) {
+        return new Date(fechaTexto);
+      }
+
       const meses = {
-        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
-        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
-        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3,
+        'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7,
+        'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
       };
+
       const partes = fechaTexto.toLowerCase().split(' de ');
-      if (partes.length !== 3) return fechaTexto;
-      return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
+      if (partes.length !== 3) return new Date();
+
+      const dia = parseInt(partes[0]);
+      const mes = meses[partes[1]];
+      const anio = parseInt(partes[2]);
+
+      return new Date(anio, mes, dia);
     }
 
     const empleado = JSON.parse(localStorage.getItem('empleado'));
@@ -51,14 +64,12 @@
       document.getElementById('cargo').innerText = empleado.cargo;
       document.getElementById('ingreso').innerText = empleado.ingreso;
 
-      const fechaNormalizada = normalizarFecha(empleado.ingreso);
-      const fechaIngreso = new Date(fechaNormalizada);
+      const fechaIngreso = normalizarFecha(empleado.ingreso);
       const hoy = new Date();
-      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
-      const meses = hoy.getMonth() - fechaIngreso.getMonth();
-      const totalMeses = (años * 12) + meses;
-      const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = empleado.vacaciones || 0;
+      const mesesTrabajados = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
+      const acumuladas = Math.floor((15 / 12) * mesesTrabajados);
+
+      const tomadas = parseInt(empleado.vacaciones || 0);
       const disponibles = Math.max(acumuladas - tomadas, 0);
 
       document.getElementById('vacacionesTomadas').innerText = tomadas;
@@ -85,8 +96,7 @@
 
     function enLetras(num) {
       const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-      const words = formatter.format(num).replace(/\./g, '').replace('$', '').trim();
-      return words;
+      return formatter.format(num).replace(/\./g, '').replace('$', '').trim();
     }
 
     async function generarCertificado() {
@@ -99,7 +109,7 @@
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
+${nombre} identificado con cédula de ciudadanía No. ${cedula} labora en
 nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
 
