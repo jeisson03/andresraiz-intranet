@@ -26,22 +26,10 @@
     </div>
 
     <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
-    <a id="descargar" style="display:none;" download="certificado_laboral.pdf">Descargar certificado</a>
   </div>
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
-    function normalizarFecha(fechaTexto) {
-      const meses = {
-        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
-        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
-        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
-      };
-      const partes = fechaTexto.toLowerCase().split(' de ');
-      if (partes.length !== 3) return fechaTexto;
-      return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
-    }
-
     const empleado = JSON.parse(localStorage.getItem('empleado'));
     if (!empleado) {
       window.location.href = "index.html";
@@ -49,18 +37,17 @@
       document.getElementById('nombre').innerText = empleado.nombre;
       document.getElementById('cedula').innerText = empleado.cedula;
       document.getElementById('cargo').innerText = empleado.cargo;
-      document.getElementById('ingreso').innerText = empleado.ingreso;
+      const fechaLegible = new Date(empleado.ingreso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('ingreso').innerText = fechaLegible;
 
-      const fechaNormalizada = normalizarFecha(empleado.ingreso);
-      const fechaIngreso = new Date(fechaNormalizada);
+      const fechaIngreso = new Date(empleado.ingreso);
       const hoy = new Date();
       const años = hoy.getFullYear() - fechaIngreso.getFullYear();
       const meses = hoy.getMonth() - fechaIngreso.getMonth();
       const totalMeses = (años * 12) + meses;
       const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = parseInt(empleado.vacaciones || 0);
+      const tomadas = Number(empleado.vacaciones) || 0;
       const disponibles = Math.max(acumuladas - tomadas, 0);
-
       document.getElementById('vacacionesTomadas').innerText = tomadas;
       document.getElementById('vacacionesDisponibles').innerText = disponibles;
     }
@@ -83,44 +70,54 @@
       return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
     }
 
-    function enLetras(num) {
-      const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
-      const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
-      const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-      const miles = Math.floor(num / 1000);
-      const resto = num % 1000;
-      const c = Math.floor(resto / 100);
-      const d = Math.floor((resto % 100) / 10);
-      const u = resto % 10;
-      let texto = '';
-      if (miles > 0) {
-        texto += (miles === 1 ? 'MIL' : enLetras(miles) + ' MIL') + ' ';
+    function enLetrasColombianas(numero) {
+      const UNIDADES = ['CERO','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE'];
+      const DECENAS = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+      const CENTENAS = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+
+      function convertir(num) {
+        if (num === 0) return 'CERO';
+        if (num === 100) return 'CIEN';
+
+        let resultado = '';
+        if (num >= 1000000) {
+          resultado += convertir(Math.floor(num / 1000000)) + ' MILLONES ';
+          num %= 1000000;
+        }
+        if (num >= 1000) {
+          if (Math.floor(num / 1000) === 1) {
+            resultado += 'MIL ';
+          } else {
+            resultado += convertir(Math.floor(num / 1000)) + ' MIL ';
+          }
+          num %= 1000;
+        }
+        if (num >= 100) {
+          resultado += CENTENAS[Math.floor(num / 100)] + ' ';
+          num %= 100;
+        }
+        if (num >= 10) {
+          if (num >= 11 && num <= 15) {
+            const especiales = ['ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE'];
+            return resultado + especiales[num - 11] + ' ';
+          }
+          resultado += DECENAS[Math.floor(num / 10)] + ' ';
+          num %= 10;
+        }
+        if (num > 0) {
+          resultado += UNIDADES[num] + ' ';
+        }
+        return resultado.trim();
       }
-      if (resto > 0) {
-        texto += `${centenas[c]} ${decenas[d]} ${unidades[u]}`;
-      }
-      return texto.trim() + ' PESOS';
+
+      return convertir(numero) + ' PESOS';
     }
 
     async function generarCertificado() {
       const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
       const hoy = new Date();
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-
-      const texto = `Sabaneta, ${fechaActual}
-\n\n\n\nA QUIEN PUEDA INTERESAR
-\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que 
-${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:
-\n
-${enLetras(salario)} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO
-EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
-
-Cualquier información o requerimiento adicional con gusto será atendido por medio del
-correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
+      const texto = `Sabaneta, ${fechaActual}\n\n\n\nA QUIEN PUEDA INTERESAR\n\n\n\nANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor\n${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en\nnuestra compañía desde el ${new Date(ingreso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })} hasta la fecha bajo el cargo de ${cargo}\nmediante un contrato a término indefinido, con un salario básico de:\n\n${enLetrasColombianas(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A\n${enLetrasColombianas(transporte).toUpperCase()} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO\nEQUIVALENTE A ${enLetrasColombianas(rodamiento).toUpperCase()} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON\nPROMEDIO DE ${enLetrasColombianas(comisiones).toUpperCase()} (${numeroATexto(comisiones)})\n\nCualquier información o requerimiento adicional con gusto será atendido por medio del\ncorreo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
       const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
       const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
@@ -140,15 +137,10 @@ correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-
       const visor = document.getElementById('visor');
-      const descargar = document.getElementById('descargar');
-
+      visor.removeAttribute('src');
       visor.style.display = 'block';
-      visor.src = url;
-
-      descargar.style.display = 'inline-block';
-      descargar.href = url;
+      setTimeout(() => visor.src = url, 100);
     }
   </script>
 </body>
