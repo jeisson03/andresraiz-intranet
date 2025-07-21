@@ -23,7 +23,6 @@
       <button onclick="descargarColilla()">Ver colilla de este mes</button>
       <button onclick="generarCertificado()">Generar certificado laboral</button>
       <button onclick="cerrarSesion()">Cerrar sesión</button>
-      <a href="admin.html"><button>➕ Agregar empleado</button></a>
     </div>
 
     <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
@@ -31,17 +30,6 @@
 
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
-    function normalizarFecha(fechaTexto) {
-      const meses = {
-        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
-        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
-        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
-      };
-      const partes = fechaTexto.toLowerCase().split(' de ');
-      if (partes.length !== 3) return fechaTexto;
-      return `${partes[2]}-${meses[partes[1]]}-${partes[0].padStart(2, '0')}`;
-    }
-
     const empleado = JSON.parse(localStorage.getItem('empleado'));
     if (!empleado) {
       window.location.href = "index.html";
@@ -49,20 +37,27 @@
       document.getElementById('nombre').innerText = empleado.nombre;
       document.getElementById('cedula').innerText = empleado.cedula;
       document.getElementById('cargo').innerText = empleado.cargo;
-      document.getElementById('ingreso').innerText = empleado.ingreso;
 
-      const fechaNormalizada = normalizarFecha(empleado.ingreso);
-      const fechaIngreso = new Date(fechaNormalizada);
+      // Formatear fecha sin hora
+      const fecha = new Date(empleado.ingreso);
+      const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+      const fechaFormateada = fecha.toLocaleDateString('es-CO', opciones);
+      document.getElementById('ingreso').innerText = fechaFormateada;
+
       const hoy = new Date();
-      const años = hoy.getFullYear() - fechaIngreso.getFullYear();
-      const meses = hoy.getMonth() - fechaIngreso.getMonth();
-      const totalMeses = (años * 12) + meses;
+      const fechaIngreso = new Date(empleado.ingreso);
+      const totalMeses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
       const acumuladas = Math.floor((15 / 12) * totalMeses);
-      const tomadas = parseInt(empleado.vacaciones || 0);
+      const tomadas = parseInt(empleado.vacaciones) || 0;
       const disponibles = Math.max(acumuladas - tomadas, 0);
 
       document.getElementById('vacacionesTomadas').innerText = tomadas;
       document.getElementById('vacacionesDisponibles').innerText = disponibles;
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem('empleado');
+      window.location.href = "index.html";
     }
 
     function descargarColilla() {
@@ -74,17 +69,20 @@
       setTimeout(() => visor.src = path, 100);
     }
 
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
-      window.location.href = "index.html";
-    }
-
     function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      }).format(valor);
     }
 
     function enLetras(num) {
-      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+      const formatter = new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      });
       return formatter.format(num).replace(/\./g, '').replace('$', '').trim();
     }
 
@@ -99,7 +97,7 @@ A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${ingreso} hasta la fecha bajo el cargo de ${cargo}
+nuestra compañía desde el ${fechaActual} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
 
 ${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
