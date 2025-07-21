@@ -38,11 +38,9 @@
       document.getElementById('cedula').innerText = empleado.cedula;
       document.getElementById('cargo').innerText = empleado.cargo;
 
-      // Formatear fecha sin hora
       const fecha = new Date(empleado.ingreso);
       const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
-      const fechaFormateada = fecha.toLocaleDateString('es-CO', opciones);
-      document.getElementById('ingreso').innerText = fechaFormateada;
+      document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO', opciones);
 
       const hoy = new Date();
       const fechaIngreso = new Date(empleado.ingreso);
@@ -87,17 +85,19 @@
     }
 
     async function generarCertificado() {
-      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-      const hoy = new Date();
-      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+      try {
+        const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+        const hoy = new Date();
+        const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+        const fechaIngresoLimpia = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const texto = `Sabaneta, ${fechaActual}
+        const texto = `Sabaneta, ${fechaActual}
 
 A QUIEN PUEDA INTERESAR
 
 ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
 ${nombre} identificado con cedula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${fechaActual} hasta la fecha bajo el cargo de ${cargo}
+nuestra compañía desde el ${fechaIngresoLimpia} hasta la fecha bajo el cargo de ${cargo}
 mediante un contrato a término indefinido, con un salario básico de:
 
 ${enLetras(salario).toUpperCase()} (${numeroATexto(salario)}), CON AUXILIO DE TRANSPORTE EQUIVALENTE A
@@ -108,28 +108,43 @@ PROMEDIO DE ${enLetras(comisiones).toUpperCase()} (${numeroATexto(comisiones)})
 Cualquier información o requerimiento adicional con gusto será atendido por medio del
 correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`;
 
-      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-      const page = pdfDoc.getPages()[0];
-      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+        const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+        const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+        const page = pdfDoc.getPages()[0];
+        const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      page.drawText(texto, {
-        x: 50,
-        y: 620,
-        size: 10,
-        font,
-        lineHeight: 14,
-        color: PDFLib.rgb(0, 0, 0),
-        maxWidth: 500,
-      });
+        page.drawText(texto, {
+          x: 50,
+          y: 620,
+          size: 10,
+          font,
+          lineHeight: 14,
+          color: PDFLib.rgb(0, 0, 0),
+          maxWidth: 500,
+        });
 
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const visor = document.getElementById('visor');
-      visor.removeAttribute('src');
-      visor.style.display = 'block';
-      setTimeout(() => visor.src = url, 100);
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+
+        const visor = document.getElementById('visor');
+        visor.removeAttribute('src');
+        visor.style.display = 'block';
+
+        // Si está en celular, descarga en lugar de mostrar
+        if (/android|iphone|ipad|mobile/i.test(navigator.userAgent)) {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = "certificado_laboral.pdf";
+          link.click();
+        } else {
+          setTimeout(() => visor.src = url, 100);
+        }
+
+      } catch (error) {
+        alert('Error generando el certificado.');
+        console.error(error);
+      }
     }
   </script>
 </body>
