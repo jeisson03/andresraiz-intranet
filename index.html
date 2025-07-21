@@ -19,19 +19,16 @@
   </div>
 
   <script>
-    // 👉 Reemplaza esta URL con la URL de tu Apps Script desplegado como app web
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz265nBZZwXbI33WDrNAGIRTOEYs3d-kyRCojmBVoX150FSOv8bv2G8VFPnXZwmOd4O/exec';
-
     async function obtenerDatos() {
       try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error('No se pudo cargar la hoja de cálculo');
+        const res = await fetch('https://script.google.com/macros/s/AKfycbz265nBZZwXbI33WDrNAGIRTOEYs3d-kyRCojmBVoX150FSOv8bv2G8VFPnXZwmOd4O/exec');
+        if (!res.ok) throw new Error('No se pudo acceder a los datos');
         const datos = await res.json();
-        console.log("✅ Datos obtenidos desde Google Sheets:", datos);
+        console.log("✅ Datos cargados desde Google Sheets:", datos);
         return datos;
       } catch (error) {
-        console.error("❌ Error al obtener datos:", error);
-        document.getElementById('error').innerText = 'Error al conectar con el sistema. Intenta más tarde.';
+        console.error("❌ Error cargando desde Google Sheets:", error);
+        document.getElementById('error').innerText = 'Error al conectar con los datos.';
         return [];
       }
     }
@@ -41,12 +38,13 @@
 
       const user = document.getElementById('usuario').value.trim().toLowerCase();
       const pass = document.getElementById('clave').value.trim();
+      console.log("🔐 Intentando login:", user, pass);
 
       const empleados = await obtenerDatos();
-      const empleado = empleados.find(emp => emp.usuario?.toLowerCase() === user && emp.clave === pass);
+      const empleado = empleados.find(emp => emp.usuario === user && emp.clave === pass);
 
       if (empleado) {
-        console.log("✅ Login exitoso:", empleado.nombre);
+        console.log("✅ Login exitoso para:", empleado.nombre);
         localStorage.setItem('empleado', JSON.stringify(empleado));
         window.location.href = 'dashboard.html';
       } else {
