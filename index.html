@@ -19,11 +19,16 @@
   </div>
 
   <script>
-    const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbz-TSd1kzCFyuT1NlIrowwxRZ_bieLjW5Vxeys7Wj73etvDeh34ThpBH0Zee2uI5qFS/exec";
+    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados"; // Reemplaza con tu URL real de Vercel
+    const API_KEY = "andresraiz2026"; // Solo visible desde el frontend, pero sin acceso directo a Google Sheets
 
     async function obtenerDatos() {
       try {
-        const res = await fetch(URL_GOOGLE_SHEET);
+        const res = await fetch(URL_BACKEND, {
+          headers: {
+            'x-api-key': API_KEY
+          }
+        });
         if (!res.ok) throw new Error('Error al conectar');
         const datos = await res.json();
         console.log("✅ Datos cargados:", datos);
