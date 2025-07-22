@@ -19,16 +19,12 @@
   </div>
 
   <script>
-    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados"; // Reemplaza con tu URL real de Vercel
-    const API_KEY = "andresraiz2026"; // Solo visible desde el frontend, pero sin acceso directo a Google Sheets
+    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
+    const CLAVE_SEGURA = "andresraiz2026"; // aún se envía al backend, pero NO expone Google Sheets
 
     async function obtenerDatos() {
       try {
-        const res = await fetch(URL_BACKEND, {
-          headers: {
-            'x-api-key': API_KEY
-          }
-        });
+        const res = await fetch(`${URL_BACKEND}?clave=${CLAVE_SEGURA}`);
         if (!res.ok) throw new Error('Error al conectar');
         const datos = await res.json();
         console.log("✅ Datos cargados:", datos);
