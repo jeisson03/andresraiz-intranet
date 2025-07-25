@@ -119,61 +119,69 @@
       return convertir(valor).toUpperCase() + " PESOS";
     }
 
-    async function generarCertificado() {
-      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-      const hoy = new Date();
-      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-      const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+   async function generarCertificado() {
+  const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+  const hoy = new Date();
+  const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+  const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-      const page = pdfDoc.getPages()[0];
-      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+  const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+  const page = pdfDoc.getPages()[0];
+  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      let y = 700;
-      const left = 50;
-      const lineHeight = 18;
-      const maxWidth = 500;
+  let y = 700;
+  const left = 50;
+  const lineHeight = 18;
+  const maxWidth = 500;
 
-      function drawLine(text, extraY = 0) {
-        page.drawText(text, { x: left, y, size: 10, font, maxWidth });
-        y -= lineHeight + extraY;
-      }
+  function drawLine(text, extraY = 0) {
+    page.drawText(text, { x: left, y, size: 10, font, maxWidth });
+    y -= lineHeight + extraY;
+  }
 
-      drawLine(`Sabaneta, ${fechaActual}`, 20);
-      drawLine(`A QUIEN PUEDA INTERESAR`, 30);
+  // Encabezado
+  drawLine(`Sabaneta, ${fechaActual}`, 20);
+  drawLine(`A QUIEN PUEDA INTERESAR`, 30);
 
-      drawLine(`ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor`, 10);
-      drawLine(`${nombre} identificado con cédula de ciudadanía No. ${cedula} labora en nuestra compañía`, 0);
-      drawLine(`desde el ${ingresoFecha} hasta la fecha, bajo el cargo de ${cargo}, mediante un contrato`, 0);
-      drawLine(`a término indefinido, con un salario básico de:`, 20);
+  // Cuerpo dividido
+  drawLine(`ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor`, 10);
+  drawLine(`${nombre} identificado con cédula de ciudadanía No. ${cedula}`, 0);
+  drawLine(`labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha,`, 0);
+  drawLine(`bajo el cargo de ${cargo}, mediante un contrato a término indefinido,`, 0);
+  drawLine(`con un salario básico de:`, 20);
 
-      drawLine(`${enLetras(salario)} (${numeroATexto(salario)}),`, 5);
-      drawLine(`CON AUXILIO DE TRANSPORTE EQUIVALENTE A ${enLetras(transporte)} (${numeroATexto(transporte)}),`, 5);
-      drawLine(`UN AUXILIO DE RODAMIENTO EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}),`, 5);
-      drawLine(`MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`, 30);
+  // Ingresos en letras + pesos
+  drawLine(`${enLetras(salario)} (${numeroATexto(salario)}),`, 5);
+  drawLine(`con auxilio de transporte equivalente a ${enLetras(transporte)} (${numeroATexto(transporte)}),`, 5);
+  drawLine(`un auxilio de rodamiento equivalente a ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}),`, 5);
+  drawLine(`más comisiones no constitutivas de salario con promedio de`, 0);
+  drawLine(`${enLetras(comisiones)} (${numeroATexto(comisiones)}).`, 30);
 
-      drawLine(`Cualquier información o requerimiento adicional con gusto será atendido por medio`, 0);
-      drawLine(`del correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`, 40);
+  // Final
+  drawLine(`Cualquier información o requerimiento adicional con gusto será atendido`, 0);
+  drawLine(`por medio del correo electrónico servicio@andresraiz.com o los teléfonos`, 0);
+  drawLine(`358 85 64 y 3245366761.`, 40);
 
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
 
-      const visor = document.getElementById('visor');
-      visor.removeAttribute('src');
-      visor.style.display = 'block';
-      visor.src = url;
+  const visor = document.getElementById('visor');
+  visor.removeAttribute('src');
+  visor.style.display = 'block';
+  visor.src = url;
 
-      const boton = document.getElementById('btnDescargar');
-      boton.style.display = 'inline-block';
-      boton.onclick = () => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Certificado-${nombre}.pdf`;
-        a.click();
-      };
-    }
+  const boton = document.getElementById('btnDescargar');
+  boton.style.display = 'inline-block';
+  boton.onclick = () => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Certificado-${nombre}.pdf`;
+    a.click();
+  };
+}
+
   </script>
 </body>
 </html>
