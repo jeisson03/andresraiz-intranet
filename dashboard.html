@@ -118,7 +118,6 @@
 
       return convertir(valor).toUpperCase() + " PESOS";
     }
-
 async function generarCertificado() {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
   const hoy = new Date();
@@ -130,46 +129,46 @@ async function generarCertificado() {
   const page = pdfDoc.getPages()[0];
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-  let y = 700; // Punto inicial más alto
-  const left = 80; // Margen izquierdo generoso
-  const maxWidth = 450;
-  const lineHeight = 20;
+  let y = 700;
+  const left = 80;
+  const maxWidth = 440;
+  const fontSize = 10;
+  const lineHeight = 18;
 
-  function drawBlock(text, extraY = 0) {
+  function drawParagraph(text, extraY = 10) {
     const words = text.split(" ");
     let line = "";
-    for (const word of words) {
+
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
       const testLine = line + word + " ";
-      const { width } = font.widthOfTextAtSize(testLine, 10);
-      if (width > maxWidth) {
-        page.drawText(line.trim(), { x: left, y, size: 10, font });
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+      if (testWidth > maxWidth && line !== "") {
+        page.drawText(line.trim(), { x: left, y, size: fontSize, font });
         y -= lineHeight;
         line = word + " ";
       } else {
         line = testLine;
       }
     }
-    if (line) {
-      page.drawText(line.trim(), { x: left, y, size: 10, font });
+
+    if (line.trim() !== "") {
+      page.drawText(line.trim(), { x: left, y, size: fontSize, font });
       y -= lineHeight;
     }
     y -= extraY;
   }
 
-  // Fecha y encabezado
-  drawBlock(`Sabaneta, ${fechaActual}`, 30);
-  drawBlock(`A QUIEN PUEDA INTERESAR`, 30);
+  drawParagraph(`Sabaneta, ${fechaActual}`, 30);
+  drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
 
-  // Párrafo 1: Datos generales
-  drawBlock(`ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT 901524934 certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha}, desempeñando el cargo de ${cargo}, bajo contrato a término indefinido.`, 25);
+  drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha, desempeñando el cargo de ${cargo}, mediante contrato a término indefinido.`);
 
-  // Párrafo 2: Remuneración completa
-  drawBlock(`Su remuneración está compuesta por un salario básico de ${enLetras(salario)} (${numeroATexto(salario)}), auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)}), auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), y comisiones no constitutivas de salario con un promedio mensual de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`, 25);
+  drawParagraph(`Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)}), auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)}), auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), y comisiones no constitutivas de salario con promedio mensual de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`);
 
-  // Párrafo 3: Cierre
-  drawBlock(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para mayor información, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`, 40);
+  drawParagraph(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo electrónico servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`);
 
-  // Generar PDF
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
@@ -188,7 +187,6 @@ async function generarCertificado() {
     a.click();
   };
 }
-
   </script>
 </body>
 </html>
