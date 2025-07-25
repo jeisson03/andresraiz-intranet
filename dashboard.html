@@ -119,7 +119,7 @@
       return convertir(valor).toUpperCase() + " PESOS";
     }
 
-   async function generarCertificado() {
+  async function generarCertificado() {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
   const hoy = new Date();
   const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
@@ -130,46 +130,38 @@
   const page = pdfDoc.getPages()[0];
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-  // Ajustes de formato para emular el estilo deseado
-  let y = 730; // Punto inicial más alto
-  const left = 80; // Margen izquierdo ampliado
-  const maxWidth = 460;
-  const lineHeight = 22; // Espaciado más aireado
+  let y = 700;
+  const left = 80;
+  const maxWidth = 450;
+  const lineHeight = 20;
 
-  function drawLine(text, extraY = 0) {
-    page.drawText(text, {
-      x: left,
-      y,
-      size: 10, // Tamaño formal
-      font,
-      maxWidth,
-      lineHeight
-    });
-    y -= lineHeight + extraY;
+  function drawBlock(text, extraY = 0) {
+    const lines = text.split('\n');
+    for (const line of lines) {
+      page.drawText(line.trim(), {
+        x: left,
+        y,
+        size: 10,
+        font,
+        maxWidth,
+      });
+      y -= lineHeight;
+    }
+    y -= extraY;
   }
 
   // Encabezado
-  drawLine(`Sabaneta, ${fechaActual}`, 30);
-  drawLine(`A QUIEN PUEDA INTERESAR`, 40);
+  drawBlock(`Sabaneta, ${fechaActual}`, 30);
+  drawBlock(`A QUIEN PUEDA INTERESAR`, 30);
 
-  // Cuerpo
-  drawLine(`ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor`);
-  drawLine(`${nombre}, identificado con cédula de ciudadanía No. ${cedula},`);
-  drawLine(`labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha,`);
-  drawLine(`bajo el cargo de ${cargo}, mediante contrato a término indefinido.`);
-  drawLine(`Su remuneración se compone de:`);
+  // Párrafos agrupados como en el modelo
+  drawBlock(`ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT 901524934 certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha}, desempeñando el cargo de ${cargo}, mediante contrato a término indefinido.`, 20);
 
-  drawLine(`${enLetras(salario)} (${numeroATexto(salario)}) como salario básico.`);
-  drawLine(`${enLetras(transporte)} (${numeroATexto(transporte)}) como auxilio de transporte.`);
-  drawLine(`${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) como auxilio de rodamiento.`);
-  drawLine(`Y comisiones promedio de ${enLetras(comisiones)} (${numeroATexto(comisiones)}),`);
-  drawLine(`no constitutivas de salario.`);
+  drawBlock(`Su remuneración está compuesta por un salario básico de ${enLetras(salario)} (${numeroATexto(salario)}), auxilio de transporte por ${enLetras(transporte)} (${numeroATexto(transporte)}), auxilio de rodamiento por ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), y comisiones no constitutivas de salario con un promedio de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`, 20);
 
-  // Final
-  drawLine(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes.`, 30);
-  drawLine(`Para cualquier información adicional puede comunicarse al correo`, 0);
-  drawLine(`servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`);
+  drawBlock(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para mayor información puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`, 30);
 
+  // Generar y mostrar
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
