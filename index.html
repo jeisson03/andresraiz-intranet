@@ -19,39 +19,32 @@
   </div>
 
   <script>
-    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
-    const CLAVE_SEGURA = "andresraiz2026"; // aún se envía al backend, pero NO expone Google Sheets
-
-    async function obtenerDatos() {
-      try {
-        const res = await fetch(`${URL_BACKEND}?clave=${CLAVE_SEGURA}`);
-        if (!res.ok) throw new Error('Error al conectar');
-        const datos = await res.json();
-        console.log("✅ Datos cargados:", datos);
-        return datos;
-      } catch (err) {
-        console.error("❌ Error:", err);
-        document.getElementById("error").innerText = "Error al conectar con la base de datos.";
-        return [];
-      }
-    }
+    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados"; // Tu backend en Vercel
 
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const user = document.getElementById("usuario").value.trim().toLowerCase();
-      const pass = document.getElementById("clave").value.trim();
+      const usuario = document.getElementById("usuario").value.trim();
+      const clave = document.getElementById("clave").value.trim();
 
-      const empleados = await obtenerDatos();
-      const empleado = empleados.find(emp => 
-        emp.usuario && emp.usuario.toLowerCase() === user && 
-        emp.clave && String(emp.clave).trim() === pass
-      );
+      try {
+        const res = await fetch(URL_BACKEND, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ usuario, clave })
+        });
 
-      if (empleado) {
+        if (!res.ok) {
+          throw new Error("Usuario o contraseña incorrectos.");
+        }
+
+        const empleado = await res.json();
         localStorage.setItem("empleado", JSON.stringify(empleado));
         window.location.href = "dashboard.html";
-      } else {
-        document.getElementById("error").innerText = "Usuario o contraseña incorrectos.";
+      } catch (err) {
+        console.error("❌ Error:", err);
+        document.getElementById("error").innerText = err.message || "Error de conexión.";
       }
     });
   </script>
