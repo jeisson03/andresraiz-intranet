@@ -19,7 +19,7 @@
   </div>
 
   <script>
-    const URL_BACKEND = ""https://backend-vercel-pi.vercel.app/api/empleados"; // Tu backend en Vercel
+    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
 
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -36,15 +36,17 @@
         });
 
         if (!res.ok) {
-          throw new Error("Usuario o contraseña incorrectos.");
+          const err = await res.json();
+          document.getElementById("error").innerText = err.error || "Error al iniciar sesión";
+          return;
         }
 
         const empleado = await res.json();
         localStorage.setItem("empleado", JSON.stringify(empleado));
         window.location.href = "dashboard.html";
-      } catch (err) {
-        console.error("❌ Error:", err);
-        document.getElementById("error").innerText = err.message || "Error de conexión.";
+      } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("error").innerText = "Error al conectar con el servidor.";
       }
     });
   </script>
