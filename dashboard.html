@@ -118,75 +118,76 @@
 
       return convertir(valor).toUpperCase() + " PESOS";
     }
-async function generarCertificado() {
-  const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-  const hoy = new Date();
-  const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-  const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-  const page = pdfDoc.getPages()[0];
-  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    async function generarCertificado() {
+      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
+      const hoy = new Date();
+      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
+      const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-  let y = 700;
-  const left = 80;
-  const maxWidth = 440;
-  const fontSize = 10;
-  const lineHeight = 18;
+      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
+      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+      const page = pdfDoc.getPages()[0];
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-  function drawParagraph(text, extraY = 10) {
-    const words = text.split(" ");
-    let line = "";
+      let y = 700;
+      const left = 80;
+      const maxWidth = 440;
+      const fontSize = 10;
+      const lineHeight = 18;
 
-    for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      const testLine = line + word + " ";
-      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+      function drawParagraph(text, extraY = 10) {
+        const words = text.split(" ");
+        let line = "";
 
-      if (testWidth > maxWidth && line !== "") {
-        page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-        y -= lineHeight;
-        line = word + " ";
-      } else {
-        line = testLine;
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          const testLine = line + word + " ";
+          const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+          if (testWidth > maxWidth && line !== "") {
+            page.drawText(line.trim(), { x: left, y, size: fontSize, font });
+            y -= lineHeight;
+            line = word + " ";
+          } else {
+            line = testLine;
+          }
+        }
+
+        if (line.trim() !== "") {
+          page.drawText(line.trim(), { x: left, y, size: fontSize, font });
+          y -= lineHeight;
+        }
+        y -= extraY;
       }
+
+      drawParagraph(`Sabaneta, ${fechaActual}`, 30);
+      drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
+
+      drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`);
+
+      drawParagraph(`Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)}), auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)}), auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), y comisiones no constitutivas de salario con promedio mensual de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`);
+
+      drawParagraph(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo electrónico servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`);
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const visor = document.getElementById('visor');
+      visor.removeAttribute('src');
+      visor.style.display = 'block';
+      visor.src = url;
+
+      const boton = document.getElementById('btnDescargar');
+      boton.style.display = 'inline-block';
+      boton.onclick = () => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Certificado laboral - ${nombre}.pdf`;
+        a.click();
+      };
     }
-
-    if (line.trim() !== "") {
-      page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-      y -= lineHeight;
-    }
-    y -= extraY;
-  }
-
-  drawParagraph(`Sabaneta, ${fechaActual}`, 30);
-  drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
-
-  drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha, desempeñando el cargo de ${cargo}, mediante contrato a término indefinido.`);
-
-  drawParagraph(`Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)}), auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)}), auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), y comisiones no constitutivas de salario con promedio mensual de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`);
-
-  drawParagraph(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo electrónico servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`);
-
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-
-  const visor = document.getElementById('visor');
-  visor.removeAttribute('src');
-  visor.style.display = 'block';
-  visor.src = url;
-
-  const boton = document.getElementById('btnDescargar');
-  boton.style.display = 'inline-block';
-  boton.onclick = () => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Certificado-${nombre}.pdf`;
-    a.click();
-  };
-}
   </script>
 </body>
 </html>
