@@ -105,13 +105,11 @@
           let u = cientos % 10;
 
           if (c > 0) resultado += CENTENAS[c] + " ";
-          if (d > 0 || u > 0) {
-            if (d === 1 && u > 0) {
-              resultado += ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE"][u] + " ";
-            } else {
-              if (d > 0) resultado += DECENAS[d] + (u > 0 ? " Y " : " ");
-              if (u > 0) resultado += UNIDADES[u] + " ";
-            }
+          if (d === 1 && u > 0) {
+            resultado += ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE"][u] + " ";
+          } else {
+            if (d > 0) resultado += DECENAS[d] + (u > 0 ? " Y " : " ");
+            if (u > 0) resultado += UNIDADES[u] + " ";
           }
         }
 
@@ -127,42 +125,36 @@
       const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
       const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const texto = 
-`Sabaneta, ${fechaActual}
-
-
-A QUIEN PUEDA INTERESAR
-
-
-ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor
-${nombre.toUpperCase()} identificado con cédula de ciudadanía No. ${cedula} labora en
-nuestra compañía desde el ${ingresoFecha} hasta la fecha, bajo el cargo de ${cargo}
-mediante un contrato a término indefinido, con un salario básico de:
-
-
-${enLetras(salario)} (${numeroATexto(salario)}) CON AUXILIO DE TRANSPORTE EQUIVALENTE A
-${enLetras(transporte)} (${numeroATexto(transporte)}), UN AUXILIO DE RODAMIENTO EQUIVALENTE A
-${enLetras(rodamiento)} (${numeroATexto(rodamiento)}) MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON
-PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)})
-
-
-Cualquier información o requerimiento adicional con gusto será atendido por medio del
-correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761.`;
-
       const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
       const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
       const page = pdfDoc.getPages()[0];
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      page.drawText(texto, {
-        x: 50,
-        y: 700,
-        size: 10,
-        font,
-        lineHeight: 16,
-        color: PDFLib.rgb(0, 0, 0),
-        maxWidth: 500,
-      });
+      let y = 700;
+      const left = 50;
+      const lineHeight = 18;
+      const maxWidth = 500;
+
+      function drawLine(text, extraY = 0) {
+        page.drawText(text, { x: left, y, size: 10, font, maxWidth });
+        y -= lineHeight + extraY;
+      }
+
+      drawLine(`Sabaneta, ${fechaActual}`, 20);
+      drawLine(`A QUIEN PUEDA INTERESAR`, 30);
+
+      drawLine(`ANDRÉS RAÍZ INMOBILIARIA S.A.S con NIT: 901524934 certifica que el señor`, 10);
+      drawLine(`${nombre} identificado con cédula de ciudadanía No. ${cedula} labora en nuestra compañía`, 0);
+      drawLine(`desde el ${ingresoFecha} hasta la fecha, bajo el cargo de ${cargo}, mediante un contrato`, 0);
+      drawLine(`a término indefinido, con un salario básico de:`, 20);
+
+      drawLine(`${enLetras(salario)} (${numeroATexto(salario)}),`, 5);
+      drawLine(`CON AUXILIO DE TRANSPORTE EQUIVALENTE A ${enLetras(transporte)} (${numeroATexto(transporte)}),`, 5);
+      drawLine(`UN AUXILIO DE RODAMIENTO EQUIVALENTE A ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}),`, 5);
+      drawLine(`MÁS COMISIONES NO CONSTITUTIVAS DE SALARIO CON PROMEDIO DE ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`, 30);
+
+      drawLine(`Cualquier información o requerimiento adicional con gusto será atendido por medio`, 0);
+      drawLine(`del correo electrónico servicio@andresraiz.com o los teléfonos 358 85 64 y 3245366761`, 40);
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
