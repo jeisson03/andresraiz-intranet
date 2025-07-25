@@ -54,6 +54,11 @@
       document.getElementById('vacacionesDisponibles').innerText = disponibles;
     }
 
+    function cerrarSesion() {
+      localStorage.removeItem('empleado');
+      window.location.href = "index.html";
+    }
+
     function descargarColilla() {
       const mes = new Date().toISOString().slice(0, 7);
       const path = `colillas/${empleado.cedula}/${mes}.pdf`;
@@ -61,11 +66,6 @@
       visor.removeAttribute('src');
       visor.style.display = "block";
       setTimeout(() => visor.src = path, 100);
-    }
-
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
-      window.location.href = "index.html";
     }
 
     function numeroATexto(valor) {
@@ -91,19 +91,12 @@
 
         let resultado = "";
 
-        if (millones > 0) {
-          resultado += (millones === 1 ? "UN MILLÓN " : convertir(millones) + " MILLONES ");
-        }
-
-        if (miles > 0) {
-          resultado += (miles === 1 ? "MIL " : convertir(miles) + " MIL ");
-        }
-
+        if (millones > 0) resultado += (millones === 1 ? "UN MILLÓN " : convertir(millones) + " MILLONES ");
+        if (miles > 0) resultado += (miles === 1 ? "MIL " : convertir(miles) + " MIL ");
         if (cientos > 0) {
           let c = Math.floor(cientos / 100);
           let d = Math.floor((cientos % 100) / 10);
           let u = cientos % 10;
-
           if (c > 0) resultado += CENTENAS[c] + " ";
           if (d === 1 && u > 0) {
             resultado += ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE"][u] + " ";
@@ -166,7 +159,20 @@
 
       drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`);
 
-      drawParagraph(`Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)}), auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)}), auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)}), y comisiones no constitutivas de salario con promedio mensual de ${enLetras(comisiones)} (${numeroATexto(comisiones)}).`);
+      let remuneracion = `Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)})`;
+
+      if (transporte && parseInt(transporte) > 0) {
+        remuneracion += `, auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)})`;
+      }
+      if (rodamiento && parseInt(rodamiento) > 0) {
+        remuneracion += `, auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)})`;
+      }
+      if (comisiones && parseInt(comisiones) > 0) {
+        remuneracion += `, y comisiones no constitutivas de salario con promedio mensual de ${enLetras(comisiones)} (${numeroATexto(comisiones)})`;
+      }
+
+      remuneracion += ".";
+      drawParagraph(remuneracion);
 
       drawParagraph(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo electrónico servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`);
 
