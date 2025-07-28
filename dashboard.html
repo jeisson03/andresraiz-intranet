@@ -157,7 +157,7 @@
       drawParagraph(`Sabaneta, ${fechaActual}`, 30);
       drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
 
-      drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`);
+      drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`);
 
       let remuneracion = `Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)})`;
 
@@ -187,10 +187,17 @@
 
       const boton = document.getElementById('btnDescargar');
       boton.style.display = 'inline-block';
+
+      // Limpia y formatea el nombre del archivo
+      const nombreLimpio = nombre.normalize("NFD")
+                                  .replace(/[\u0300-\u036f]/g, "")
+                                  .replace(/[^a-zA-Z0-9 ]/g, "")
+                                  .replace(/\s+/g, "_");
+
       boton.onclick = () => {
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Certificado laboral - ${nombre}.pdf`;
+        a.download = `Certificado_laboral_${nombreLimpio}.pdf`;
         a.click();
       };
     }
