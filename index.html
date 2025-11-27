@@ -27,21 +27,24 @@
       const clave = document.getElementById("clave").value.trim();
 
       try {
-        const res = await fetch(URL_BACKEND, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ usuario, clave })
-        });
-
+        // Usamos GET para traer todos los empleados
+        const res = await fetch(URL_BACKEND);
         if (!res.ok) {
-          const err = await res.json();
-          document.getElementById("error").innerText = err.error || "Error al iniciar sesión";
+          document.getElementById("error").innerText = "Error al conectar con el servidor.";
           return;
         }
 
-        const empleado = await res.json();
+        const empleados = await res.json();
+
+        // Validamos usuario y clave en el frontend
+        const empleado = empleados.find(emp => emp.usuario === usuario && emp.clave === clave);
+
+        if (!empleado) {
+          document.getElementById("error").innerText = "Usuario o contraseña incorrectos.";
+          return;
+        }
+
+        // Guardamos en localStorage y redirigimos
         localStorage.setItem("empleado", JSON.stringify(empleado));
         window.location.href = "dashboard.html";
       } catch (error) {
