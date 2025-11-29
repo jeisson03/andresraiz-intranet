@@ -3,212 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel - Andrés Raíz</title>
+  <title>Dashboard - Intranet Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="panel">
-    <img src="assets/logo.png" class="logo" alt="Logo"/>
-    <h2>Bienvenido, <span id="nombre"></span></h2>
 
-    <div class="info-box">
+<body>
+  <div class="dashboard-container">
+    <img src="assets/logo.png" class="logo">
+
+    <h2>Bienvenido,</h2>
+
+    <div class="card">
       <p><strong>Cédula:</strong> <span id="cedula"></span></p>
       <p><strong>Cargo:</strong> <span id="cargo"></span></p>
       <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
-      <p><strong>Días disfrutados:</strong> <span id="vacacionesTomadas"></span></p>
-      <p><strong>Días disponibles:</strong> <span id="vacacionesDisponibles"></span></p>
+      <p><strong>Días disfrutados:</strong> <span id="disfrutados"></span></p>
+      <p><strong>Días disponibles:</strong> <span id="disponibles"></span></p>
     </div>
 
-    <div class="btn-group">
-      <button onclick="descargarColilla()">Ver colilla de este mes</button>
-      <button onclick="generarCertificado()">Generar certificado laboral</button>
-      <button id="btnDescargar" style="display:none;">📥 Descargar certificado</button>
-      <button onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
-
-    <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
+    <button id="btnColilla">Ver colilla de este mes</button>
+    <button id="btnCertificado">Generar certificado laboral</button>
+    <button id="btnCerrar">Cerrar sesión</button>
   </div>
 
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
   <script>
-    const empleado = JSON.parse(localStorage.getItem('empleado'));
+    // --------------------------
+    //   VALIDAR SESIÓN
+    // --------------------------
+    const empleado = JSON.parse(localStorage.getItem("empleado"));
+
     if (!empleado) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById('nombre').innerText = empleado.nombre;
-      document.getElementById('cedula').innerText = empleado.cedula;
-      document.getElementById('cargo').innerText = empleado.cargo;
-
-      const fecha = new Date(empleado.ingreso);
-      const fechaIngreso = fecha.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
-      document.getElementById('ingreso').innerText = fechaIngreso;
-
-      const hoy = new Date();
-      const años = hoy.getFullYear() - fecha.getFullYear();
-      const meses = hoy.getMonth() - fecha.getMonth();
-      const totalMeses = (años * 12) + meses;
-      const acumuladas = Math.floor((15 / 12) * totalMeses);
-
-      // FIX PARA QUE NO FALLE SI EL BACKEND NO ENVÍA "vacaciones"
-      const tomadas = empleado.vacaciones ? parseInt(empleado.vacaciones) : 0;
-      const disponibles = Math.max(acumuladas - tomadas, 0);
-
-      document.getElementById('vacacionesTomadas').innerText = tomadas;
-      document.getElementById('vacacionesDisponibles').innerText = disponibles;
-    }
-
-    function cerrarSesion() {
-      localStorage.removeItem('empleado');
+      // Si no hay sesión, enviamos al login
       window.location.href = "index.html";
     }
 
-    function descargarColilla() {
-      const mes = new Date().toISOString().slice(0, 7);
-      const path = `colillas/${empleado.cedula}/${mes}.pdf`;
+    // --------------------------
+    //   MOSTRAR DATOS DEL EMPLEADO
+    ---------------------------
+    document.getElementById("cedula").innerText = empleado.cedula || "";
+    document.getElementById("cargo").innerText = empleado.cargo || "";
+    document.getElementById("ingreso").innerText = empleado.ingreso || "";
+    document.getElementById("disfrutados").innerText = empleado.disfrutados || "0";
+    document.getElementById("disponibles").innerText = empleado.disponibles || "0";
 
-      const visor = document.getElementById("visor");
-      visor.removeAttribute('src');
-      visor.style.display = "block";
+    // --------------------------
+    //   FUNCIONES DE BOTONES
+    // --------------------------
 
-      setTimeout(() => visor.src = path, 100);
-    }
+    document.getElementById("btnColilla").addEventListener("click", () => {
+      window.location.href = "descargar_colilla.html";
+    });
 
-    function numeroATexto(valor) {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-      }).format(valor);
-    }
+    document.getElementById("btnCertificado").addEventListener("click", () => {
+      window.location.href = "certificado.html";
+    });
 
-    function enLetras(valor) {
-      const UNIDADES = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-      const DECENAS = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-      const CENTENAS = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
-
-      function convertir(n) {
-        if (n === 0) return "CERO";
-        if (n === 100) return "CIEN";
-
-        let millones = Math.floor(n / 1000000);
-        let miles = Math.floor((n % 1000000) / 1000);
-        let cientos = n % 1000;
-
-        let resultado = "";
-
-        if (millones > 0) resultado += (millones === 1 ? "UN MILLÓN " : convertir(millones) + " MILLONES ");
-        if (miles > 0) resultado += (miles === 1 ? "MIL " : convertir(miles) + " MIL ");
-
-        if (cientos > 0) {
-          let c = Math.floor(cientos / 100);
-          let d = Math.floor((cientos % 100) / 10);
-          let u = cientos % 10;
-
-          if (c > 0) resultado += CENTENAS[c] + " ";
-
-          if (d === 1 && u > 0) {
-            resultado += ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE"][u] + " ";
-          } else {
-            if (d > 0) resultado += DECENAS[d] + (u > 0 ? " Y " : " ");
-            if (u > 0) resultado += UNIDADES[u] + " ";
-          }
-        }
-
-        return resultado.trim();
-      }
-
-      return convertir(valor).toUpperCase() + " PESOS";
-    }
-
-    async function generarCertificado() {
-      const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
-
-      const hoy = new Date();
-      const fechaActual = hoy.toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-      const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", { year: 'numeric', month: 'long', day: 'numeric' });
-
-      const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-      const page = pdfDoc.getPages()[0];
-      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-
-      let y = 700;
-      const left = 80;
-      const maxWidth = 440;
-      const fontSize = 10;
-      const lineHeight = 18;
-
-      function drawParagraph(text, extraY = 10) {
-        const words = text.split(" ");
-        let line = "";
-
-        for (let i = 0; i < words.length; i++) {
-          const word = words[i];
-          const testLine = line + word + " ";
-          const testWidth = font.widthOfTextAtSize(testLine, fontSize);
-
-          if (testWidth > maxWidth && line !== "") {
-            page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-            y -= lineHeight;
-            line = word + " ";
-          } else {
-            line = testLine;
-          }
-        }
-
-        if (line.trim() !== "") {
-          page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-          y -= lineHeight;
-        }
-        y -= extraY;
-      }
-
-      drawParagraph(`Sabaneta, ${fechaActual}`, 30);
-      drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
-
-      drawParagraph(`ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`);
-
-      let remuneracion = `Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)})`;
-
-      if (transporte && parseInt(transporte) > 0) {
-        remuneracion += `, auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)})`;
-      }
-      if (rodamiento && parseInt(rodamiento) > 0) {
-        remuneracion += `, auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)})`;
-      }
-      if (comisiones && parseInt(comisiones) > 0) {
-        remuneracion += `, recibe a la fecha un promedio de salario variable de ${enLetras(comisiones)} (${numeroATexto(comisiones)})`;
-      }
-
-      remuneracion += ".";
-      drawParagraph(remuneracion);
-
-      drawParagraph(`Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo electrónico servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`);
-
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-
-      const visor = document.getElementById('visor');
-      visor.removeAttribute('src');
-      visor.style.display = 'block';
-      visor.src = url;
-
-      const boton = document.getElementById('btnDescargar');
-      boton.style.display = 'inline-block';
-
-      const nombreLimpio = nombre.normalize("NFD")
-                                  .replace(/[\u0300-\u036f]/g, "")
-                                  .replace(/[^a-zA-Z0-9 ]/g, "")
-                                  .replace(/\s+/g, "_");
-
-      boton.onclick = () => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Certificado_laboral_${nombreLimpio}.pdf`;
-        a.click();
-      };
-    }
+    document.getElementById("btnCerrar").addEventListener("click", () => {
+      localStorage.removeItem("empleado");
+      window.location.href = "index.html";
+    });
   </script>
+
 </body>
 </html>
