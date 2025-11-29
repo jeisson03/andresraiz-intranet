@@ -18,40 +18,41 @@
     <p id="error" class="error-msg"></p>
   </div>
 
-  <script>
-    const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
+<script>
+  const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
 
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const usuario = document.getElementById("usuario").value.trim();
-      const clave = document.getElementById("clave").value.trim();
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      try {
-        // Usamos GET para traer todos los empleados
-        const res = await fetch(URL_BACKEND);
-        if (!res.ok) {
-          document.getElementById("error").innerText = "Error al conectar con el servidor.";
-          return;
-        }
+    const usuario = document.getElementById("usuario").value.trim();
+    const clave = document.getElementById("clave").value.trim();
 
-        const empleados = await res.json();
+    try {
+      const res = await fetch(URL_BACKEND, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, clave })
+      });
 
-        // Validamos usuario y clave en el frontend
-        const empleado = empleados.find(emp => emp.usuario === usuario && emp.clave === clave);
+      const data = await res.json();
 
-        if (!empleado) {
-          document.getElementById("error").innerText = "Usuario o contraseña incorrectos.";
-          return;
-        }
-
-        // Guardamos en localStorage y redirigimos
-        localStorage.setItem("empleado", JSON.stringify(empleado));
-        window.location.href = "dashboard.html";
-      } catch (error) {
-        console.error("Error:", error);
-        document.getElementById("error").innerText = "Error al conectar con el servidor.";
+      if (!res.ok) {
+        document.getElementById("error").innerText = data.error || "Error al iniciar sesión.";
+        return;
       }
-    });
-  </script>
+
+      // Guardamos datos del empleado autenticado
+      localStorage.setItem("empleado", JSON.stringify(data));
+
+      // Redirigir al dashboard
+      window.location.href = "dashboard.html";
+
+    } catch (error) {
+      console.error("Error:", error);
+      document.getElementById("error").innerText = "Error al conectar con el servidor.";
+    }
+  });
+</script>
+
 </body>
 </html>
