@@ -242,8 +242,16 @@ async function generarCertificado() {
   );
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
+const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+const url = URL.createObjectURL(blob);
+
+const visor = document.getElementById('visor');
+
+visor.srcdoc = "";
+visor.src = "";
+
+visor.style.display = 'block';
+visor.src = url;
 
   document.getElementById('visor').style.display = 'block';
   document.getElementById('visor').src = url;
