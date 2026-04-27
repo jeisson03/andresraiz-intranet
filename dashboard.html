@@ -144,7 +144,7 @@ function enLetras(n) {
 }
 
 // =========================
-// CERTIFICADO PRO (PDF BIEN ALINEADO)
+// CERTIFICADO PRO (AJUSTADO)
 // =========================
 async function generarCertificado() {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
@@ -163,13 +163,13 @@ async function generarCertificado() {
 
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
 
-  let y = 660;
-  const left = 65;
-  const maxWidth = 460;
-  const fontSize = 10;
+  let y = 700;
+  const left = 75;
+  const maxWidth = 420;
+  const fontSize = 9.5;
   const lineHeight = 16;
 
-  function drawParagraph(text, extraY = 8) {
+  function drawParagraph(text, extraY = 12) {
     const words = text.split(" ");
     let line = "";
 
@@ -195,7 +195,7 @@ async function generarCertificado() {
   }
 
   drawParagraph(`Sabaneta, ${fechaActual}`, 20);
-  drawParagraph(`A QUIEN PUEDA INTERESAR`, 20);
+  drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
 
   drawParagraph(
     `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`
