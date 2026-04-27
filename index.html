@@ -7,51 +7,50 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="login-container">
-    <img src="assets/logo.png" alt="Logo" class="logo">
-    <h2>Intranet - Andrés Raíz</h2>
-    <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuario" required>
-      <input type="password" id="clave" placeholder="Contraseña" required>
-      <button type="submit">Ingresar</button>
-    </form>
-    <p id="error" class="error-msg"></p>
-  </div>
+
+<div class="login-container">
+  <img src="assets/logo.png" alt="Logo" class="logo">
+  <h2>Intranet Andrés Raíz</h2>
+
+  <form id="loginForm">
+    <input type="text" id="usuario" placeholder="Usuario" required>
+    <input type="password" id="clave" placeholder="Contraseña" required>
+    <button type="submit">Ingresar</button>
+  </form>
+
+  <p id="error" class="error-msg"></p>
+</div>
 
 <script>
-  const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
+const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
 
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const usuario = document.getElementById("usuario").value.trim();
-    const clave = document.getElementById("clave").value.trim();
+  const usuario = document.getElementById("usuario").value.trim();
+  const clave = document.getElementById("clave").value.trim();
 
-    try {
-      const res = await fetch(URL_BACKEND, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario, clave })
-      });
+  try {
+    const res = await fetch(URL_BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario, clave })
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        document.getElementById("error").innerText = data.error || "Error al iniciar sesión.";
-        return;
-      }
-
-      // Guardamos datos del empleado autenticado
-      localStorage.setItem("empleado", JSON.stringify(data));
-
-      // Redirigir al dashboard
-      window.location.href = "dashboard.html";
-
-    } catch (error) {
-      console.error("Error:", error);
-      document.getElementById("error").innerText = "Error al conectar con el servidor.";
+    if (!res.ok) {
+      document.getElementById("error").innerText = data.error || "Error al iniciar sesión.";
+      return;
     }
-  });
+
+    localStorage.setItem("empleado", JSON.stringify(data));
+    window.location.href = "dashboard.html";
+
+  } catch (error) {
+    document.getElementById("error").innerText = "Error al conectar con el servidor.";
+  }
+});
 </script>
 
 </body>
