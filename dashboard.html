@@ -144,7 +144,7 @@ function enLetras(n) {
 }
 
 // =========================
-// CERTIFICADO (ESTRUCTURA REAL)
+// CERTIFICADO FINAL
 // =========================
 async function generarCertificado() {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
@@ -168,7 +168,7 @@ async function generarCertificado() {
   const fontSize = 9.5;
   const lineHeight = 16;
 
-  let y = 720; // 🔥 ARRIBA COMO CERTIFICADO REAL
+  let y = 675; // 🔥 equilibrio perfecto
 
   function drawParagraph(text, extraY = 10) {
     const words = text.split(" ");
@@ -195,13 +195,9 @@ async function generarCertificado() {
     y -= extraY;
   }
 
-  // FECHA
   drawParagraph(`Sabaneta, ${fechaActual}`, 25);
-
-  // TITULO
   drawParagraph(`A QUIEN PUEDA INTERESAR`, 30);
 
-  // CUERPO
   drawParagraph(
     `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`,
     20
@@ -223,7 +219,6 @@ async function generarCertificado() {
 
   drawParagraph(remuneracion, 20);
 
-  // CIERRE
   drawParagraph(
     `Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`,
     40
