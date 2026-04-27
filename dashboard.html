@@ -2,71 +2,49 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel - Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="panel">
-  <img src="assets/logo.png" class="logo">
+  <img src="assets/logo.png" class="logo" alt="Logo"/>
 
-  <div class="header">
-    <h2>👋 Hola, <span id="nombre"></span></h2>
-    <p class="sub">Bienvenido a tu panel</p>
-  </div>
+  <h2>Bienvenido, <span id="nombre"></span></h2>
 
-  <div class="card">
+  <div class="info-box">
     <p><strong>Cédula:</strong> <span id="cedula"></span></p>
     <p><strong>Cargo:</strong> <span id="cargo"></span></p>
-    <p><strong>Ingreso:</strong> <span id="ingreso"></span></p>
-
-    <div class="vacaciones">
-      <p><strong>Vacaciones</strong></p>
-      <div class="barra">
-        <div id="progreso"></div>
-      </div>
-      <div class="vac-info">
-        <span>Usados: <b id="vacacionesTomadas"></b></span>
-        <span>Disponibles: <b id="vacacionesDisponibles"></b></span>
-      </div>
-    </div>
+    <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
+    <p><strong>Días disfrutados:</strong> <span id="vacacionesTomadas"></span></p>
+    <p><strong>Días disponibles:</strong> <span id="vacacionesDisponibles"></span></p>
   </div>
 
   <div class="btn-group">
-    <button class="btn principal" onclick="descargarColilla()">📄 Ver colilla</button>
-    <button class="btn secundario" onclick="generarCertificado()">📑 Generar certificado</button>
-    <button id="btnDescargar" class="btn descarga" style="display:none;">📥 Descargar certificado</button>
-    <button class="btn salir" onclick="cerrarSesion()">Cerrar sesión</button>
+    <button onclick="descargarColilla()">Ver colilla de este mes</button>
+    <button onclick="generarCertificado()">Generar certificado laboral</button>
+    <button id="btnDescargar" style="display:none;">📥 Descargar certificado</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
   </div>
 
-  <iframe id="visor"></iframe>
+  <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
 </div>
 
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <script>
-// =========================
-// SESIÓN
-// =========================
 const empleado = JSON.parse(localStorage.getItem('empleado'));
 if (!empleado) window.location.href = "index.html";
 
-// =========================
 // DATOS
-// =========================
 document.getElementById('nombre').innerText = empleado.nombre;
 document.getElementById('cedula').innerText = empleado.cedula;
 document.getElementById('cargo').innerText = empleado.cargo;
 
 const fecha = new Date(empleado.ingreso);
-document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO', {
-  year: 'numeric', month: 'long', day: 'numeric'
-});
+document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO');
 
-// =========================
 // VACACIONES
-// =========================
 const hoy = new Date();
 const meses = (hoy.getFullYear() - fecha.getFullYear()) * 12 + (hoy.getMonth() - fecha.getMonth());
 
@@ -77,17 +55,16 @@ const disponibles = Math.max(acumuladas - tomadas, 0);
 document.getElementById('vacacionesTomadas').innerText = tomadas;
 document.getElementById('vacacionesDisponibles').innerText = disponibles;
 
-const porcentaje = acumuladas > 0 ? (tomadas / acumuladas) * 100 : 0;
-document.getElementById("progreso").style.width = porcentaje + "%";
-
 // =========================
 // FUNCIONES
 // =========================
+
 function cerrarSesion() {
   localStorage.removeItem('empleado');
   window.location.href = "index.html";
 }
 
+// 🚧 COLILLA (PROXIMAMENTE)
 function descargarColilla() {
   const visor = document.getElementById("visor");
 
@@ -111,158 +88,51 @@ function descargarColilla() {
   `;
 }
 
-// =========================
-// FORMATEO
-// =========================
-function numeroATexto(valor) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(valor);
-}
-
-function enLetras(n) {
-  const UNIDADES = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-  const DECENAS = ["", "DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-  const CENTENAS = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
-
-  function convertir(n) {
-    if (n === 0) return "CERO";
-    if (n === 100) return "CIEN";
-
-    let millones = Math.floor(n / 1000000);
-    let miles = Math.floor((n % 1000000) / 1000);
-    let cientos = n % 1000;
-
-    let resultado = "";
-
-    if (millones > 0) resultado += (millones === 1 ? "UN MILLÓN " : convertir(millones) + " MILLONES ");
-    if (miles > 0) resultado += (miles === 1 ? "MIL " : convertir(miles) + " MIL ");
-
-    if (cientos > 0) {
-      let c = Math.floor(cientos / 100);
-      let d = Math.floor((cientos % 100) / 10);
-      let u = cientos % 10;
-
-      if (c > 0) resultado += CENTENAS[c] + " ";
-
-      if (d === 1 && u > 0) {
-        resultado += ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE"][u] + " ";
-      } else {
-        if (d > 0) resultado += DECENAS[d] + (u > 0 ? " Y " : " ");
-        if (u > 0) resultado += UNIDADES[u] + " ";
-      }
-    }
-    return resultado.trim();
-  }
-
-  return convertir(n) + " PESOS";
-}
-
-// =========================
-// CERTIFICADO FINAL
-// =========================
+// 📄 CERTIFICADO (FUNCIONANDO)
 async function generarCertificado() {
-  const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
 
-  const fechaActual = new Date().toLocaleDateString("es-CO", {
-    year: 'numeric', month: 'long', day: 'numeric'
+  const pdfDoc = await PDFLib.PDFDocument.create();
+  const page = pdfDoc.addPage([600, 800]);
+
+  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+  page.drawText("CERTIFICADO LABORAL", {
+    x: 180,
+    y: 750,
+    size: 16,
+    font
   });
 
-  const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", {
-    year: 'numeric', month: 'long', day: 'numeric'
-  });
-
-  const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
-  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-  const page = pdfDoc.getPages()[0];
-
-  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
-
-  const left = 75;
-  const maxWidth = 420;
-  const fontSize = 9.5;
-  const lineHeight = 16;
-
-  let y = 675; // 🔥 equilibrio perfecto
-
-  function drawParagraph(text, extraY = 10) {
-    const words = text.split(" ");
-    let line = "";
-
-    for (let word of words) {
-      const testLine = line + word + " ";
-      const width = font.widthOfTextAtSize(testLine, fontSize);
-
-      if (width > maxWidth) {
-        page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-        y -= lineHeight;
-        line = word + " ";
-      } else {
-        line = testLine;
-      }
-    }
-
-    if (line.trim()) {
-      page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-      y -= lineHeight;
-    }
-
-    y -= extraY;
-  }
-
-  drawParagraph(`Sabaneta, ${fechaActual}`, 25);
-  drawParagraph(`A QUIEN PUEDA INTERESAR`, 30);
-
-  drawParagraph(
-    `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`,
-    20
-  );
-
-  let remuneracion =
-    `Su remuneración se compone de: salario básico de ${enLetras(salario)} (${numeroATexto(salario)})`;
-
-  if (transporte > 0)
-    remuneracion += `, auxilio de transporte de ${enLetras(transporte)} (${numeroATexto(transporte)})`;
-
-  if (rodamiento > 0)
-    remuneracion += `, auxilio de rodamiento de ${enLetras(rodamiento)} (${numeroATexto(rodamiento)})`;
-
-  if (comisiones > 0)
-    remuneracion += `, recibe a la fecha un promedio de salario variable de ${enLetras(comisiones)} (${numeroATexto(comisiones)})`;
-
-  remuneracion += ".";
-
-  drawParagraph(remuneracion, 20);
-
-  drawParagraph(
-    `Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`,
-    40
-  );
+  page.drawText(`Nombre: ${empleado.nombre}`, { x: 50, y: 700, size: 12, font });
+  page.drawText(`Cédula: ${empleado.cedula}`, { x: 50, y: 680, size: 12, font });
+  page.drawText(`Cargo: ${empleado.cargo}`, { x: 50, y: 660, size: 12, font });
 
   const pdfBytes = await pdfDoc.save();
-const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-const url = URL.createObjectURL(blob);
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
 
-const visor = document.getElementById('visor');
+  // 🔥 RESETEAR IFRAME (SOLUCIÓN REAL)
+  const visorActual = document.getElementById("visor");
+  visorActual.remove();
 
-visor.srcdoc = "";
-visor.src = "";
+  const nuevoVisor = document.createElement("iframe");
+  nuevoVisor.id = "visor";
+  nuevoVisor.style.width = "100%";
+  nuevoVisor.style.height = "500px";
+  nuevoVisor.style.marginTop = "15px";
 
-visor.style.display = 'block';
-visor.src = url;
+  document.querySelector(".panel").appendChild(nuevoVisor);
 
-  document.getElementById('visor').style.display = 'block';
-  document.getElementById('visor').src = url;
+  nuevoVisor.src = url;
 
+  // BOTON DESCARGA
   const boton = document.getElementById('btnDescargar');
   boton.style.display = 'block';
 
   boton.onclick = () => {
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Certificado_${nombre}.pdf`;
+    a.download = `Certificado_${empleado.nombre}.pdf`;
     a.click();
   };
 }
