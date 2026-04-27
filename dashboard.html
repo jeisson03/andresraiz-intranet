@@ -144,7 +144,7 @@ function enLetras(n) {
 }
 
 // =========================
-// CERTIFICADO PRO (AJUSTADO)
+// CERTIFICADO PRO (CENTRADO AUTOMÁTICO)
 // =========================
 async function generarCertificado() {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
@@ -163,14 +163,16 @@ async function generarCertificado() {
 
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
 
-  let y = 700;
   const left = 75;
   const maxWidth = 420;
   const fontSize = 9.5;
   const lineHeight = 16;
 
-  function drawParagraph(text, extraY = 12) {
-    const words = text.split(" ");
+  let bloques = [];
+
+  function dividirTexto(texto) {
+    const words = texto.split(" ");
+    let lines = [];
     let line = "";
 
     for (let word of words) {
@@ -178,26 +180,26 @@ async function generarCertificado() {
       const width = font.widthOfTextAtSize(testLine, fontSize);
 
       if (width > maxWidth) {
-        page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-        y -= lineHeight;
+        lines.push(line.trim());
         line = word + " ";
       } else {
         line = testLine;
       }
     }
 
-    if (line.trim()) {
-      page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-      y -= lineHeight;
-    }
-
-    y -= extraY;
+    if (line.trim()) lines.push(line.trim());
+    return lines;
   }
 
-  drawParagraph(`Sabaneta, ${fechaActual}`, 20);
-  drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
+  function agregarParrafo(texto, espacio = 10) {
+    const lineas = dividirTexto(texto);
+    bloques.push({ lineas, espacio });
+  }
 
-  drawParagraph(
+  agregarParrafo(`Sabaneta, ${fechaActual}`, 12);
+  agregarParrafo(`A QUIEN PUEDA INTERESAR`, 15);
+
+  agregarParrafo(
     `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`
   );
 
@@ -215,11 +217,28 @@ async function generarCertificado() {
 
   remuneracion += ".";
 
-  drawParagraph(remuneracion);
+  agregarParrafo(remuneracion);
 
-  drawParagraph(
+  agregarParrafo(
     `Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`
   );
+
+  let totalAltura = 0;
+  bloques.forEach(b => {
+    totalAltura += (b.lineas.length * lineHeight) + b.espacio;
+  });
+
+  const pageHeight = page.getHeight();
+
+  let y = (pageHeight / 2) + (totalAltura / 2);
+
+  bloques.forEach(b => {
+    b.lineas.forEach(linea => {
+      page.drawText(linea, { x: left, y, size: fontSize, font });
+      y -= lineHeight;
+    });
+    y -= b.espacio;
+  });
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
