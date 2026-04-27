@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Intranet Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="login-container">
-  <img src="assets/logo.png" alt="Logo" class="logo">
-  <h2>Intranet Andrés Raíz</h2>
+<div class="login-wrapper">
+  <div class="login-container">
 
-  <form id="loginForm">
-    <input type="text" id="usuario" placeholder="Usuario" required>
-    <input type="password" id="clave" placeholder="Contraseña" required>
-    <button type="submit">Ingresar</button>
-  </form>
+    <img src="assets/logo.png" alt="Logo" class="logo">
 
-  <p id="error" class="error-msg"></p>
+    <h1>Intranet</h1>
+    <p class="subtitle">Andrés Raíz Inmobiliaria</p>
+
+    <form id="loginForm">
+      <input type="text" id="usuario" placeholder="Usuario" required>
+      <input type="password" id="clave" placeholder="Contraseña" required>
+
+      <button type="submit">Ingresar</button>
+    </form>
+
+    <p id="error" class="error-msg"></p>
+
+  </div>
 </div>
 
 <script>
@@ -47,8 +54,8 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     localStorage.setItem("empleado", JSON.stringify(data));
     window.location.href = "dashboard.html";
 
-  } catch (error) {
-    document.getElementById("error").innerText = "Error al conectar con el servidor.";
+  } catch {
+    document.getElementById("error").innerText = "Error de conexión.";
   }
 });
 </script>
