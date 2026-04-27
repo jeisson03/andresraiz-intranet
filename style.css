@@ -1,11 +1,10 @@
-/* FONDO */
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #fff6e6, #ffe0c2);
 }
 
-/* CONTENEDOR CENTRAL */
+/* CONTENEDOR */
 .login-wrapper {
   height: 100vh;
   display: flex;
@@ -21,7 +20,6 @@ body {
   width: 320px;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-  animation: fadeIn 0.6s ease;
 }
 
 /* LOGO */
@@ -43,6 +41,10 @@ h1 {
 }
 
 /* INPUTS */
+.input-group {
+  position: relative;
+}
+
 input {
   width: 100%;
   padding: 12px;
@@ -59,6 +61,19 @@ input:focus {
   box-shadow: 0 0 0 2px rgba(240,108,0,0.1);
 }
 
+/* PASSWORD ICON */
+.password-group {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
 /* BOTON */
 button {
   width: 100%;
@@ -70,11 +85,33 @@ button {
   font-size: 15px;
   cursor: pointer;
   transition: 0.3s;
+  position: relative;
 }
 
 button:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 15px rgba(240,108,0,0.2);
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* SPINNER */
+.spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ERROR */
@@ -84,14 +121,15 @@ button:hover {
   margin-top: 10px;
 }
 
-/* ANIMACION */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* SHAKE ERROR */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-3px); }
+  100% { transform: translateX(0); }
+}
+
+.error-shake {
+  animation: shake 0.3s;
 }
