@@ -2,63 +2,40 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel - Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="app">
-  <div class="panel">
+<div class="panel">
+  <img src="assets/logo.png" class="logo">
 
-    <img src="assets/logo.png" class="logo">
+  <h2>Bienvenido, <span id="nombre"></span></h2>
 
-    <div class="header">
-      <h2>👋 Hola, <span id="nombre"></span></h2>
-      <p class="sub">Bienvenido a tu panel</p>
-    </div>
-
-    <div class="card">
-      <p><strong>Cédula:</strong> <span id="cedula"></span></p>
-      <p><strong>Cargo:</strong> <span id="cargo"></span></p>
-      <p><strong>Ingreso:</strong> <span id="ingreso"></span></p>
-
-      <div class="vacaciones">
-        <p><strong>Vacaciones</strong></p>
-        <div class="barra">
-          <div id="progreso"></div>
-        </div>
-        <div class="vac-info">
-          <span>Usados: <b id="vacacionesTomadas"></b></span>
-          <span>Disponibles: <b id="vacacionesDisponibles"></b></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-group">
-      <button class="btn principal" onclick="descargarColilla()">📄 Ver colilla</button>
-      <button class="btn secundario" onclick="generarCertificado()">📑 Generar certificado</button>
-      <button id="btnDescargar" class="btn descarga" style="display:none;">📥 Descargar certificado</button>
-      <button class="btn salir" onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
-
-    <iframe id="visor"></iframe>
-
+  <div class="info-box">
+    <p><strong>Cédula:</strong> <span id="cedula"></span></p>
+    <p><strong>Cargo:</strong> <span id="cargo"></span></p>
+    <p><strong>Fecha de ingreso:</strong> <span id="ingreso"></span></p>
+    <p><strong>Días disfrutados:</strong> <span id="vacacionesTomadas"></span></p>
+    <p><strong>Días disponibles:</strong> <span id="vacacionesDisponibles"></span></p>
   </div>
+
+  <div class="btn-group">
+    <button onclick="descargarColilla()">Ver colilla de este mes</button>
+    <button onclick="generarCertificado()">Generar certificado laboral</button>
+    <button id="btnDescargar" style="display:none;">📥 Descargar certificado</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
+
+  <iframe id="visor" style="display:none;" width="100%" height="500px"></iframe>
 </div>
 
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <script>
-// =========================
-// SESIÓN
-// =========================
 const empleado = JSON.parse(localStorage.getItem('empleado'));
 if (!empleado) window.location.href = "index.html";
 
-// =========================
-// DATOS
-// =========================
 document.getElementById('nombre').innerText = empleado.nombre;
 document.getElementById('cedula').innerText = empleado.cedula;
 document.getElementById('cargo').innerText = empleado.cargo;
@@ -66,9 +43,6 @@ document.getElementById('cargo').innerText = empleado.cargo;
 const fecha = new Date(empleado.ingreso);
 document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO');
 
-// =========================
-// VACACIONES
-// =========================
 const hoy = new Date();
 const meses = (hoy.getFullYear() - fecha.getFullYear()) * 12 + (hoy.getMonth() - fecha.getMonth());
 
@@ -79,12 +53,6 @@ const disponibles = Math.max(acumuladas - tomadas, 0);
 document.getElementById('vacacionesTomadas').innerText = tomadas;
 document.getElementById('vacacionesDisponibles').innerText = disponibles;
 
-const porcentaje = acumuladas > 0 ? (tomadas / acumuladas) * 100 : 0;
-document.getElementById("progreso").style.width = porcentaje + "%";
-
-// =========================
-// FUNCIONES
-// =========================
 function cerrarSesion() {
   localStorage.removeItem('empleado');
   window.location.href = "index.html";
@@ -93,15 +61,14 @@ function cerrarSesion() {
 function descargarColilla() {
   const mes = new Date().toISOString().slice(0, 7);
   const visor = document.getElementById("visor");
+
   visor.style.display = "block";
   visor.src = `colillas/${empleado.cedula}/${mes}.pdf`;
 }
 
-// =========================
-// CERTIFICADO (usa el tuyo actual)
-// =========================
-async function generarCertificado() {
-  alert("Aquí sigue tu función actual del certificado (la que ya ajustamos)");
+// 👉 AQUÍ PEGA TU FUNCIÓN DE CERTIFICADO (LA BUENA QUE YA TENÍAS)
+function generarCertificado() {
+  alert("Aquí va tu función del certificado");
 }
 </script>
 
