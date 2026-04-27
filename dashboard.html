@@ -8,7 +8,7 @@
 <body>
 
 <div class="panel">
-  <img src="assets/logo.png" class="logo">
+  <img src="assets/logo.png" class="logo" alt="Logo"/>
 
   <h2>Bienvenido, <span id="nombre"></span></h2>
 
@@ -34,8 +34,11 @@
 
 <script>
 const empleado = JSON.parse(localStorage.getItem('empleado'));
-if (!empleado) window.location.href = "index.html";
+if (!empleado) {
+  window.location.href = "index.html";
+}
 
+// DATOS
 document.getElementById('nombre').innerText = empleado.nombre;
 document.getElementById('cedula').innerText = empleado.cedula;
 document.getElementById('cargo').innerText = empleado.cargo;
@@ -43,6 +46,7 @@ document.getElementById('cargo').innerText = empleado.cargo;
 const fecha = new Date(empleado.ingreso);
 document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO');
 
+// VACACIONES
 const hoy = new Date();
 const meses = (hoy.getFullYear() - fecha.getFullYear()) * 12 + (hoy.getMonth() - fecha.getMonth());
 
@@ -53,6 +57,7 @@ const disponibles = Math.max(acumuladas - tomadas, 0);
 document.getElementById('vacacionesTomadas').innerText = tomadas;
 document.getElementById('vacacionesDisponibles').innerText = disponibles;
 
+// FUNCIONES
 function cerrarSesion() {
   localStorage.removeItem('empleado');
   window.location.href = "index.html";
@@ -66,9 +71,10 @@ function descargarColilla() {
   visor.src = `colillas/${empleado.cedula}/${mes}.pdf`;
 }
 
-// 👉 AQUÍ PEGA TU FUNCIÓN DE CERTIFICADO (LA BUENA QUE YA TENÍAS)
+// ⚠️ IMPORTANTE: AQUÍ VA TU FUNCIÓN ORIGINAL DE CERTIFICADO
+// (la que ya te funcionaba antes)
 function generarCertificado() {
-  alert("Aquí va tu función del certificado");
+  alert("Aquí debes pegar tu función original de certificado");
 }
 </script>
 
