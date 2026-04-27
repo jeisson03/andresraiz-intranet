@@ -144,7 +144,7 @@ function enLetras(n) {
 }
 
 // =========================
-// CERTIFICADO PRO (AJUSTADO)
+// CERTIFICADO FINAL
 // =========================
 async function generarCertificado() {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
@@ -163,13 +163,14 @@ async function generarCertificado() {
 
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
 
-  let y = 700;
   const left = 75;
   const maxWidth = 420;
   const fontSize = 9.5;
   const lineHeight = 16;
 
-  function drawParagraph(text, extraY = 12) {
+  let y = 675; // 🔥 equilibrio perfecto
+
+  function drawParagraph(text, extraY = 10) {
     const words = text.split(" ");
     let line = "";
 
@@ -194,11 +195,12 @@ async function generarCertificado() {
     y -= extraY;
   }
 
-  drawParagraph(`Sabaneta, ${fechaActual}`, 20);
-  drawParagraph(`A QUIEN PUEDA INTERESAR`, 25);
+  drawParagraph(`Sabaneta, ${fechaActual}`, 25);
+  drawParagraph(`A QUIEN PUEDA INTERESAR`, 30);
 
   drawParagraph(
-    `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`
+    `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`,
+    20
   );
 
   let remuneracion =
@@ -215,10 +217,11 @@ async function generarCertificado() {
 
   remuneracion += ".";
 
-  drawParagraph(remuneracion);
+  drawParagraph(remuneracion, 20);
 
   drawParagraph(
-    `Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`
+    `Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`,
+    40
   );
 
   const pdfBytes = await pdfDoc.save();
