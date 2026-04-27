@@ -17,10 +17,21 @@
     <p class="subtitle">Andrés Raíz Inmobiliaria</p>
 
     <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuario" required>
-      <input type="password" id="clave" placeholder="Contraseña" required>
 
-      <button type="submit">Ingresar</button>
+      <div class="input-group">
+        <input type="text" id="usuario" placeholder="Usuario" required>
+      </div>
+
+      <div class="input-group password-group">
+        <input type="password" id="clave" placeholder="Contraseña" required>
+        <span class="toggle-password" onclick="togglePassword()">👁</span>
+      </div>
+
+      <button type="submit" id="btnLogin">
+        <span id="btnText">Ingresar</span>
+        <span id="spinner" class="spinner"></span>
+      </button>
+
     </form>
 
     <p id="error" class="error-msg"></p>
@@ -31,11 +42,25 @@
 <script>
 const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
 
+function togglePassword() {
+  const input = document.getElementById("clave");
+  input.type = input.type === "password" ? "text" : "password";
+}
+
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
+
+  const btn = document.getElementById("btnLogin");
+  const text = document.getElementById("btnText");
+  const spinner = document.getElementById("spinner");
+
+  // Estado loading
+  btn.disabled = true;
+  text.style.display = "none";
+  spinner.style.display = "inline-block";
 
   try {
     const res = await fetch(URL_BACKEND, {
@@ -47,15 +72,23 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      document.getElementById("error").innerText = data.error || "Error al iniciar sesión.";
-      return;
+      throw new Error(data.error || "Error al iniciar sesión");
     }
 
     localStorage.setItem("empleado", JSON.stringify(data));
     window.location.href = "dashboard.html";
 
-  } catch {
-    document.getElementById("error").innerText = "Error de conexión.";
+  } catch (error) {
+    document.getElementById("error").innerText = error.message;
+
+    // animación error
+    btn.classList.add("error-shake");
+    setTimeout(() => btn.classList.remove("error-shake"), 400);
+
+  } finally {
+    btn.disabled = false;
+    text.style.display = "inline";
+    spinner.style.display = "none";
   }
 });
 </script>
