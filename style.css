@@ -5,7 +5,7 @@ body {
   color: #333;
 }
 
-.panel {
+.login-container, .panel {
   max-width: 400px;
   margin: 40px auto;
   padding: 30px;
@@ -22,6 +22,30 @@ body {
 
 h2 {
   color: #f06c00;
+}
+
+form input {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+form button {
+  width: 100%;
+  padding: 10px;
+  background-color: #f06c00;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.error-msg {
+  color: red;
+  margin-top: 10px;
 }
 
 .info-box {
@@ -47,9 +71,4 @@ h2 {
   border-radius: 8px;
   cursor: pointer;
   color: white;
-}
-
-#visor {
-  margin-top: 15px;
-  border-radius: 10px;
 }
