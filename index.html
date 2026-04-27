@@ -1,66 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Intranet Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="login-wrapper">
   <div class="login-container">
-
     <img src="assets/logo.png" alt="Logo" class="logo">
-
-    <h1>Intranet</h1>
-    <p class="subtitle">Andrés Raíz Inmobiliaria</p>
+    <h2>Intranet - Andrés Raíz</h2>
 
     <form id="loginForm">
-
-      <div class="input-group">
-        <input type="text" id="usuario" placeholder="Usuario" required>
-      </div>
-
-      <div class="input-group password-group">
-        <input type="password" id="clave" placeholder="Contraseña" required>
-        <span class="toggle-password" onclick="togglePassword()">👁</span>
-      </div>
-
-      <button type="submit" id="btnLogin">
-        <span id="btnText">Ingresar</span>
-        <span id="spinner" class="spinner"></span>
-      </button>
-
+      <input type="text" id="usuario" placeholder="Usuario" required>
+      <input type="password" id="clave" placeholder="Contraseña" required>
+      <button type="submit">Ingresar</button>
     </form>
 
     <p id="error" class="error-msg"></p>
-
   </div>
-</div>
 
 <script>
 const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
-
-function togglePassword() {
-  const input = document.getElementById("clave");
-  input.type = input.type === "password" ? "text" : "password";
-}
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
-
-  const btn = document.getElementById("btnLogin");
-  const text = document.getElementById("btnText");
-  const spinner = document.getElementById("spinner");
-
-  // Estado loading
-  btn.disabled = true;
-  text.style.display = "none";
-  spinner.style.display = "inline-block";
 
   try {
     const res = await fetch(URL_BACKEND, {
@@ -72,23 +39,15 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error || "Error al iniciar sesión");
+      document.getElementById("error").innerText = data.error || "Error al iniciar sesión.";
+      return;
     }
 
     localStorage.setItem("empleado", JSON.stringify(data));
     window.location.href = "dashboard.html";
 
   } catch (error) {
-    document.getElementById("error").innerText = error.message;
-
-    // animación error
-    btn.classList.add("error-shake");
-    setTimeout(() => btn.classList.remove("error-shake"), 400);
-
-  } finally {
-    btn.disabled = false;
-    text.style.display = "inline";
-    spinner.style.display = "none";
+    document.getElementById("error").innerText = "Error al conectar con el servidor.";
   }
 });
 </script>
