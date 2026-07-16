@@ -89,9 +89,16 @@ function cerrarSesion() {
 }
 
 function descargarColilla() {
-  const mes = new Date().toISOString().slice(0, 7);
-  document.getElementById("visor").style.display = "block";
-  document.getElementById("visor").src = `colillas/${empleado.cedula}/${mes}.pdf`;
+  const visor = document.getElementById("visor");
+  visor.style.display = "block";
+  visor.removeAttribute("src");
+  visor.srcdoc = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Segoe UI,sans-serif;color:#555;">
+      <div style="font-size:48px;margin-bottom:10px;">🚧</div>
+      <h2 style="margin:0;color:#f06c00;">Sección en construcción</h2>
+      <p style="margin-top:8px;">Las colillas de pago estarán disponibles pronto.</p>
+    </div>
+  `;
 }
 
 // =========================
