@@ -5,27 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Intranet Andrés Raíz</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="login-body">
 
-<div class="login-container">
-  <img src="assets/logo.png" alt="Logo" class="logo">
-  <h2>Intranet Andrés Raíz</h2>
+  <div class="login-bg"></div>
 
-  <form id="loginForm">
-    <input type="text" id="usuario" placeholder="Usuario" required>
-    <input type="password" id="clave" placeholder="Contraseña" required>
-    <button type="submit">Ingresar</button>
-  </form>
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="assets/logo.png" alt="Logo Andrés Raíz">
+    </div>
+    <h1 class="login-title">Intranet</h1>
+    <p class="login-subtitle">Andrés Raíz Inmobiliaria</p>
 
-  <p id="error" class="error-msg"></p>
-</div>
+    <form id="loginForm" class="login-form">
+      <div class="input-group">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="usuario" placeholder="Usuario" required autocomplete="username">
+      </div>
+      <div class="input-group">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="clave" placeholder="Contraseña" required autocomplete="current-password">
+      </div>
+      <button type="submit" id="btnLogin">
+        <span id="btnText">Ingresar</span>
+        <span id="btnSpinner" class="spinner" style="display:none;"></span>
+      </button>
+    </form>
+
+    <div id="error" class="login-error"></div>
+  </div>
+
+  <footer class="login-footer">
+    Andrés Raíz Inmobiliaria S.A.S. &mdash; NIT 901524934
+  </footer>
 
 <script>
 const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const btn = document.getElementById("btnLogin");
+  const btnText = document.getElementById("btnText");
+  const btnSpinner = document.getElementById("btnSpinner");
+  const errorEl = document.getElementById("error");
+
+  btn.disabled = true;
+  btnText.style.display = "none";
+  btnSpinner.style.display = "inline-block";
+  errorEl.style.display = "none";
 
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
@@ -40,7 +70,11 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      document.getElementById("error").innerText = data.error || "Error al iniciar sesión.";
+      errorEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' + (data.error || "Credenciales incorrectas");
+      errorEl.style.display = "flex";
+      btn.disabled = false;
+      btnText.style.display = "inline";
+      btnSpinner.style.display = "none";
       return;
     }
 
@@ -48,7 +82,11 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     window.location.href = "dashboard.html";
 
   } catch (error) {
-    document.getElementById("error").innerText = "Error al conectar con el servidor.";
+    errorEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Error al conectar con el servidor';
+    errorEl.style.display = "flex";
+    btn.disabled = false;
+    btnText.style.display = "inline";
+    btnSpinner.style.display = "none";
   }
 });
 </script>
