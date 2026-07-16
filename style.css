@@ -66,12 +66,10 @@ body {
 }
 
 .login-logo img {
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
   object-fit: contain;
-  background: #fff6e6;
-  padding: 8px;
 }
 
 .login-title {
