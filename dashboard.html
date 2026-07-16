@@ -88,18 +88,211 @@ function cerrarSesion() {
   window.location.href = "index.html";
 }
 
-function descargarColilla() {
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/19AYAQ6KkliEv9drdqEx77AXReXRRwZFwszLpl8NbFgE/gviz/tq?tqx=out:csv&sheet=colillas";
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const headers = [];
+  const rows = [];
+  let i = 0;
+  while (i < lines.length) {
+    let line = lines[i];
+    const fields = [];
+    while (line !== undefined) {
+      let field = '';
+      if (line.startsWith('"')) {
+        line = line.substring(1);
+        while (line.indexOf('"') !== -1) {
+          const idx = line.indexOf('"');
+          if (idx + 1 < line.length && line[idx + 1] === '"') {
+            field += line.substring(0, idx + 1);
+            line = line.substring(idx + 2);
+          } else {
+            field += line.substring(0, idx);
+            line = line.substring(idx + 2);
+            break;
+          }
+        }
+      } else {
+        const idx = line.indexOf(',');
+        if (idx === -1) {
+          field = line;
+          line = undefined;
+        } else {
+          field = line.substring(0, idx);
+          line = line.substring(idx + 1);
+        }
+      }
+      fields.push(field.trim());
+      if (line === '') line = undefined;
+    }
+    if (i === 0) {
+      headers.push(...fields);
+    } else {
+      const obj = {};
+      headers.forEach((h, j) => obj[h] = fields[j] || '');
+      rows.push(obj);
+    }
+    i++;
+  }
+  return { headers, rows };
+}
+
+function cleanCedula(str) {
+  return (str || '').toString().replace(/[^0-9]/g, '');
+}
+
+function parseNum(str) {
+  if (!str) return 0;
+  const cleaned = str.toString().replace(/[^0-9\-]/g, '');
+  return parseInt(cleaned) || 0;
+}
+
+async function descargarColilla() {
   const visor = document.getElementById("visor");
+
   visor.style.display = "block";
   visor.removeAttribute("src");
   visor.srcdoc = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Segoe UI,sans-serif;color:#555;">
-      <div style="font-size:48px;margin-bottom:10px;">🚧</div>
-      <h2 style="margin:0;color:#f06c00;">Sección en construcción</h2>
-      <p style="margin-top:8px;">Las colillas de pago estarán disponibles pronto.</p>
-      <button onclick="parent.document.getElementById('visor').style.display='none'" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#f06c00;color:white;cursor:pointer;font-size:14px;">Cerrar</button>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:Segoe UI,sans-serif;color:#888;">
+      <p>Cargando colillas...</p>
     </div>
   `;
+
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    const text = await res.text();
+    const { headers, rows } = parseCSV(text);
+    const cedulaLimpia = cleanCedula(empleado.cedula);
+
+    const misColillas = rows.filter(r => {
+      const cedulaCol = r['Cedula'] || r['cedula'] || r['Cédula'] || '';
+      return cleanCedula(cedulaCol) === cedulaLimpia;
+    });
+
+    if (misColillas.length === 0) {
+      visor.srcdoc = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Segoe UI,sans-serif;color:#555;">
+          <div style="font-size:48px;margin-bottom:10px;">📄</div>
+          <h2 style="margin:0;color:#333;">Sin colillas disponibles</h2>
+          <p style="margin-top:8px;">No se encontraron colillas para tu cédula.</p>
+          <button onclick="parent.document.getElementById('visor').style.display='none'" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#f06c00;color:white;cursor:pointer;font-size:14px;">Cerrar</button>
+        </div>
+      `;
+      return;
+    }
+
+    const periodoCol = headers.find(h => h.toLowerCase().includes('periodo')) || 'Periodo';
+    const periodos = [...new Set(misColillas.map(r => r[periodoCol] || 'Sin período'))].reverse();
+
+    let selectorHTML = periodos.map((p, i) =>
+      `<button class="periodo-btn${i === 0 ? ' active' : ''}" data-periodo="${p}">${p}</button>`
+    ).join('');
+
+    visor.srcdoc = `
+      <div style="font-family:Segoe UI,sans-serif;padding:20px;color:#333;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+          <h2 style="margin:0;color:#f06c00;">Mis Colillas de Pago</h2>
+          <button onclick="parent.document.getElementById('visor').style.display='none'" style="padding:8px 16px;border:none;border-radius:8px;background:#eee;color:#333;cursor:pointer;font-size:13px;">Cerrar</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;" id="periodoSelector">
+          ${selectorHTML}
+        </div>
+        <div id="colillaContent"></div>
+      </div>
+      <style>
+        .periodo-btn { padding:8px 16px; border:2px solid #ddd; border-radius:8px; background:white; cursor:pointer; font-size:13px; font-family:Segoe UI,sans-serif; transition:all 0.2s; }
+        .periodo-btn:hover { border-color:#f06c00; color:#f06c00; }
+        .periodo-btn.active { background:#f06c00; color:white; border-color:#f06c00; }
+        .colilla-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .colilla-table th { background:#f06c00; color:white; padding:10px 12px; text-align:left; }
+        .colilla-table td { padding:8px 12px; border-bottom:1px solid #eee; }
+        .colilla-table tr:nth-child(even) { background:#fafafa; }
+        .colilla-section { background:white; border:1px solid #eee; border-radius:10px; padding:15px; margin-bottom:15px; }
+        .colilla-section h3 { margin:0 0 10px; font-size:15px; color:#f06c00; border-bottom:2px solid #f06c00; padding-bottom:5px; }
+        .colilla-total { background:linear-gradient(135deg,#f06c00,#ff9a3c); color:white; padding:15px; border-radius:10px; text-align:center; font-size:18px; font-weight:bold; }
+      </style>
+      <script>
+        const COLILLAS_DATA = ${JSON.stringify(misColillas)};
+        const PERIODOS = ${JSON.stringify(periodos)};
+        const PERIODO_COL = "${periodoCol}";
+
+        function renderColilla(periodo) {
+          const colilla = COLILLAS_DATA.find(r => (r[PERIODO_COL] || 'Sin período') === periodo);
+          if (!colilla) return;
+
+          function fmt(val) {
+            const n = parseInt((val || '0').toString().replace(/[^0-9\-]/g, '')) || 0;
+            return '$' + n.toLocaleString('es-CO');
+          }
+
+          const content = document.getElementById('colillaContent');
+          content.innerHTML = \`
+            <div class="colilla-section">
+              <h3>Datos del Empleado</h3>
+              <table class="colilla-table">
+                <tr><td><b>Nombre:</b></td><td>\${colilla['Nombre del empleado'] || ''}</td></tr>
+                <tr><td><b>Cargo:</b></td><td>\${colilla['Cargo'] || ''}</td></tr>
+                <tr><td><b>Salario básico:</b></td><td>\${fmt(colilla['Salario básico'])}</td></tr>
+                <tr><td><b>Días liquidados:</b></td><td>\${colilla['Días liquidados'] || ''}</td></tr>
+              </table>
+            </div>
+            <div class="colilla-section">
+              <h3>Devengados</h3>
+              <table class="colilla-table">
+                <tr><td>Salario devengado</td><td style="text-align:right">\${fmt(colilla['Salario devengado'])}</td></tr>
+                <tr><td>Horas extras</td><td style="text-align:right">\${fmt(colilla['Horas extras'])}</td></tr>
+                <tr><td>Recargos nocturnos</td><td style="text-align:right">\${fmt(colilla['Recargos nocturnos'])}</td></tr>
+                <tr><td>% Comisiones salariales</td><td style="text-align:right">\${fmt(colilla['% Comisiones salariales'])}</td></tr>
+                <tr><td>Auxilio de transporte</td><td style="text-align:right">\${fmt(colilla['Auxilio de transporte'])}</td></tr>
+                <tr><td>Auxilio de rodamiento</td><td style="text-align:right">\${fmt(colilla['Auxilio de rodamiento'])}</td></tr>
+                <tr style="font-weight:bold;background:#fff6e6"><td>TOTAL DEVENGADO</td><td style="text-align:right">\${fmt(colilla['Total devengado'])}</td></tr>
+              </table>
+            </div>
+            <div class="colilla-section">
+              <h3>Deducciones</h3>
+              <table class="colilla-table">
+                <tr><td>Salud</td><td style="text-align:right">\${fmt(colilla['Salud'])}</td></tr>
+                <tr><td>Pensión</td><td style="text-align:right">\${fmt(colilla['Pensión'])}</td></tr>
+                <tr><td>Coopeban</td><td style="text-align:right">\${fmt(colilla['Coopeban'])}</td></tr>
+                <tr><td>Retención en la fuente</td><td style="text-align:right">\${fmt(colilla['Retención en la fuente'])}</td></tr>
+                <tr><td>Otras deducciones</td><td style="text-align:right">\${fmt(colilla['Otras deducciones'])}</td></tr>
+                <tr><td>Rodamiento</td><td style="text-align:right">\${fmt(colilla['Rodamiento'])}</td></tr>
+              </table>
+            </div>
+            <div class="colilla-section">
+              <h3>Neto Pagado</h3>
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;">
+                <span>Neto pagado:</span><b>\${fmt(colilla['Neto pagado'])}</b>
+              </div>
+              <div class="colilla-total">
+                TOTAL A PAGAR: \${fmt(colilla['Total pagado'])}
+              </div>
+            </div>
+          \`;
+        }
+
+        document.querySelectorAll('.periodo-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            renderColilla(this.dataset.periodo);
+          });
+        });
+
+        if (PERIODOS.length > 0) renderColilla(PERIODOS[0]);
+      <\/script>
+    `;
+  } catch (error) {
+    visor.srcdoc = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Segoe UI,sans-serif;color:#555;">
+        <div style="font-size:48px;margin-bottom:10px;">⚠️</div>
+        <h2 style="margin:0;color:#c0392b;">Error al cargar colillas</h2>
+        <p style="margin-top:8px;">No se pudieron cargar las colillas. Intente de nuevo.</p>
+        <button onclick="parent.document.getElementById('visor').style.display='none'" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#f06c00;color:white;cursor:pointer;font-size:14px;">Cerrar</button>
+      </div>
+    `;
+  }
 }
 
 // =========================
