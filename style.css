@@ -48,7 +48,7 @@ body {
   max-width: 380px;
   margin: 20px;
   padding: 40px 35px 35px;
-  background: rgba(255,255,255,0.95);
+  background: rgba(20, 20, 40, 0.85);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   box-shadow: 0 25px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
@@ -75,14 +75,14 @@ body {
   margin: 0;
   font-size: 26px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #ffffff;
   letter-spacing: -0.5px;
 }
 
 .login-subtitle {
   margin: 4px 0 25px;
   font-size: 13px;
-  color: #999;
+  color: rgba(255,255,255,0.5);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -101,7 +101,7 @@ body {
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
-  color: #bbb;
+  color: rgba(255,255,255,0.4);
   transition: color 0.2s;
   pointer-events: none;
 }
@@ -115,23 +115,23 @@ body {
   box-sizing: border-box;
   padding: 13px 14px 13px 44px;
   border-radius: 12px;
-  border: 2px solid #e8e8e8;
+  border: 2px solid rgba(255,255,255,0.12);
   font-size: 14px;
   font-family: inherit;
-  color: #333;
-  background: #fafafa;
+  color: #ffffff;
+  background: rgba(255,255,255,0.08);
   transition: all 0.2s ease;
   outline: none;
 }
 
 .login-form input:focus {
   border-color: #f06c00;
-  background: white;
-  box-shadow: 0 0 0 4px rgba(240,108,0,0.1);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 4px rgba(240,108,0,0.15);
 }
 
 .login-form input::placeholder {
-  color: #bbb;
+  color: rgba(255,255,255,0.35);
 }
 
 /* BOTON */
@@ -191,10 +191,10 @@ body {
   gap: 6px;
   margin-top: 15px;
   padding: 10px 14px;
-  background: #fff0f0;
-  border: 1px solid #ffcdd2;
+  background: rgba(192, 57, 43, 0.2);
+  border: 1px solid rgba(192, 57, 43, 0.4);
   border-radius: 10px;
-  color: #c0392b;
+  color: #ff8a80;
   font-size: 13px;
   font-weight: 500;
   animation: errorShake 0.4s ease;
@@ -202,7 +202,7 @@ body {
 
 .login-error svg {
   flex-shrink: 0;
-  stroke: #c0392b;
+  stroke: #ff8a80;
 }
 
 @keyframes errorShake {
