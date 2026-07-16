@@ -216,8 +216,10 @@ async function descargarColilla() {
         const COLILLAS_DATA = ${JSON.stringify(misColillas)};
         const PERIODOS = ${JSON.stringify(periodos)};
         const PERIODO_COL = "${periodoCol}";
+        let currentPeriodo = PERIODOS[0] || '';
 
         function renderColilla(periodo) {
+          currentPeriodo = periodo;
           const colilla = COLILLAS_DATA.find(r => (r[PERIODO_COL] || 'Sin período') === periodo);
           if (!colilla) return;
 
@@ -228,6 +230,9 @@ async function descargarColilla() {
 
           const content = document.getElementById('colillaContent');
           content.innerHTML = \`
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+              <button id="btnDescargarColilla" style="padding:10px 20px;border:none;border-radius:8px;background:#28a745;color:white;cursor:pointer;font-size:13px;font-weight:bold;">Descargar PDF</button>
+            </div>
             <div class="colilla-section">
               <h3>Datos del Empleado</h3>
               <table class="colilla-table">
@@ -270,12 +275,17 @@ async function descargarColilla() {
               </div>
             </div>
           \`;
+
+          document.getElementById('btnDescargarColilla').addEventListener('click', function() {
+            parent.postMessage({ type: 'descargar-colilla', colilla: colilla, periodo: currentPeriodo }, '*');
+          });
         }
 
         document.querySelectorAll('.periodo-btn').forEach(btn => {
           btn.addEventListener('click', function() {
             document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
+            currentPeriodo = this.dataset.periodo;
             renderColilla(this.dataset.periodo);
           });
         });
@@ -292,6 +302,135 @@ async function descargarColilla() {
         <button onclick="parent.document.getElementById('visor').style.display='none'" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#f06c00;color:white;cursor:pointer;font-size:14px;">Cerrar</button>
       </div>
     `;
+  }
+}
+
+// =========================
+// PDF COLILLA
+// =========================
+window.addEventListener('message', async (event) => {
+  if (event.data && event.data.type === 'descargar-colilla') {
+    await generarPDFColilla(event.data.colilla, event.data.periodo);
+  }
+});
+
+async function generarPDFColilla(colilla, periodo) {
+  try {
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    const page = pdfDoc.addPage([612, 792]);
+    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+    const orange = PDFLib.rgb(240/255, 108/255, 0);
+    const dark = PDFLib.rgb(51/255, 51/255, 51/255);
+    const lightGray = PDFLib.rgb(240/255, 240/255, 240/255);
+    const white = PDFLib.rgb(1, 1, 1);
+
+    let logoImg;
+    try {
+      const logoRes = await fetch('assets/logo.png');
+      const logoBytes = await logoRes.arrayBuffer();
+      logoImg = await pdfDoc.embedPng(logoBytes);
+    } catch(e) {}
+
+    let y = 740;
+
+    if (logoImg) {
+      const logoW = 60;
+      const logoH = (logoImg.height / logoImg.width) * logoW;
+      page.drawImage(logoImg, { x: 256, y: y - logoH, width: logoW, height: logoH });
+      y -= logoH + 10;
+    }
+
+    page.drawText('ANDRES RAIZ INMOBILIARIA S.A.S.', {
+      x: page.getWidth() / 2 - font.widthOfTextAtSize('ANDRES RAIZ INMOBILIARIA S.A.S.', 14) / 2,
+      y, size: 14, font: fontBold, color: dark
+    });
+    y -= 20;
+
+    page.drawText('COLILLA DE PAGO', {
+      x: page.getWidth() / 2 - fontBold.widthOfTextAtSize('COLILLA DE PAGO', 16) / 2,
+      y, size: 16, font: fontBold, color: orange
+    });
+    y -= 20;
+
+    page.drawText(periodo || '', {
+      x: page.getWidth() / 2 - font.widthOfTextAtSize(periodo || '', 11) / 2,
+      y, size: 11, font, color: dark
+    });
+    y -= 10;
+
+    page.drawLine({ start: { x: 40, y }, end: { x: 572, y }, thickness: 2, color: orange });
+    y -= 25;
+
+    function drawRow(label, value, yPos, isBold) {
+      const f = isBold ? fontBold : font;
+      page.drawText(label, { x: 50, y: yPos, size: 10, font: f, color: dark });
+      page.drawText(value, { x: 400, y: yPos, size: 10, font: f, color: dark });
+      return yPos - 18;
+    }
+
+    function drawSectionTitle(title, yPos) {
+      page.drawRectangle({ x: 40, y: yPos - 4, width: 532, height: 22, color: orange });
+      page.drawText(title, { x: 50, y: yPos, size: 11, font: fontBold, color: white });
+      return yPos - 28;
+    }
+
+    function fmt(val) {
+      const n = parseInt((val || '0').toString().replace(/[^0-9\-]/g, '')) || 0;
+      return '$' + n.toLocaleString('es-CO');
+    }
+
+    y = drawSectionTitle('DATOS DEL EMPLEADO', y);
+    y = drawRow('Nombre:', colilla['Nombre del empleado'] || '', y, false);
+    y = drawRow('Cedula:', colilla['Cedula'] || '', y, false);
+    y = drawRow('Cargo:', colilla['Cargo'] || '', y, false);
+    y = drawRow('Dias liquidados:', colilla['Dias liquidados'] || colilla['Días liquidados'] || '', y, false);
+    y -= 10;
+
+    y = drawSectionTitle('DEVENGADOS', y);
+    y = drawRow('Salario devengado:', fmt(colilla['Salario devengado']), y, false);
+    y = drawRow('Horas extras:', fmt(colilla['Horas extras']), y, false);
+    y = drawRow('Recargos nocturnos:', fmt(colilla['Recargos nocturnos']), y, false);
+    y = drawRow('% Comisiones salariales:', fmt(colilla['% Comisiones salariales']), y, false);
+    y = drawRow('Auxilio de transporte:', fmt(colilla['Auxilio de transporte']), y, false);
+    y = drawRow('Auxilio de rodamiento:', fmt(colilla['Auxilio de rodamiento']), y, false);
+
+    page.drawLine({ start: { x: 50, y: y + 4 }, end: { x: 562, y: y + 4 }, thickness: 0.5, color: dark });
+    y = drawRow('TOTAL DEVENGADO:', fmt(colilla['Total devengado']), y - 2, true);
+    y -= 10;
+
+    y = drawSectionTitle('DEDUCCIONES', y);
+    y = drawRow('Salud:', fmt(colilla['Salud']), y, false);
+    y = drawRow('Pension:', fmt(colilla['Pensión']), y, false);
+    y = drawRow('Coopeban:', fmt(colilla['Coopeban']), y, false);
+    y = drawRow('Retencion en la fuente:', fmt(colilla['Retención en la fuente']), y, false);
+    y = drawRow('Otras deducciones:', fmt(colilla['Otras deducciones']), y, false);
+    y = drawRow('Rodamiento:', fmt(colilla['Rodamiento']), y, false);
+
+    y -= 15;
+    page.drawLine({ start: { x: 40, y }, end: { x: 572, y }, thickness: 2, color: orange });
+    y -= 25;
+
+    y = drawRow('Neto pagado:', fmt(colilla['Neto pagado']), y, true);
+    y -= 5;
+
+    page.drawRectangle({ x: 40, y: y - 8, width: 532, height: 30, color: orange, borderColor: orange, borderWidth: 1 });
+    page.drawText('TOTAL A PAGAR:  ' + fmt(colilla['Total pagado']), {
+      x: page.getWidth() / 2 - fontBold.widthOfTextAtSize('TOTAL A PAGAR:  ' + fmt(colilla['Total pagado']), 13) / 2,
+      y: y - 2, size: 13, font: fontBold, color: white
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Colilla_${(periodo || 'pago').replace(/\s+/g, '_')}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert('Error al generar el PDF: ' + error.message);
   }
 }
 
