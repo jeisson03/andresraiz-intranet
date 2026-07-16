@@ -336,7 +336,7 @@ async function generarPDFColilla(colilla, periodo) {
     let y = 740;
 
     if (logoImg) {
-      const logoW = 90;
+      const logoW = 120;
       const logoH = (logoImg.height / logoImg.width) * logoW;
       page.drawImage(logoImg, { x: 256, y: y - logoH, width: logoW, height: logoH });
       y -= logoH + 10;
