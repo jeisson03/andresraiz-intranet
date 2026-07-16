@@ -97,6 +97,7 @@ function descargarColilla() {
       <div style="font-size:48px;margin-bottom:10px;">🚧</div>
       <h2 style="margin:0;color:#f06c00;">Sección en construcción</h2>
       <p style="margin-top:8px;">Las colillas de pago estarán disponibles pronto.</p>
+      <button onclick="parent.document.getElementById('visor').style.display='none'" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#f06c00;color:white;cursor:pointer;font-size:14px;">Cerrar</button>
     </div>
   `;
 }
@@ -154,6 +155,7 @@ function enLetras(n) {
 // CERTIFICADO FINAL
 // =========================
 async function generarCertificado() {
+  try {
   const { nombre, cedula, cargo, ingreso, salario, transporte, rodamiento, comisiones } = empleado;
 
   const fechaActual = new Date().toLocaleDateString("es-CO", {
@@ -247,6 +249,18 @@ async function generarCertificado() {
     a.download = `Certificado_${nombre}.pdf`;
     a.click();
   };
+  } catch (error) {
+    const visor = document.getElementById('visor');
+    visor.style.display = 'block';
+    visor.srcdoc = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Segoe UI,sans-serif;color:#555;">
+        <div style="font-size:48px;margin-bottom:10px;">⚠️</div>
+        <h2 style="margin:0;color:#c0392b;">Error al generar certificado</h2>
+        <p style="margin-top:8px;">No se pudo generar el certificado. Intente de nuevo.</p>
+        <button onclick="parent.document.getElementById('visor').style.display='none'" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#f06c00;color:white;cursor:pointer;font-size:14px;">Cerrar</button>
+      </div>
+    `;
+  }
 }
 </script>
 
