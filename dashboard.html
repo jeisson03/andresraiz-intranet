@@ -238,6 +238,7 @@ async function generarCertificado() {
   const url = URL.createObjectURL(blob);
 
   document.getElementById('visor').style.display = 'block';
+  document.getElementById('visor').removeAttribute('srcdoc');
   document.getElementById('visor').src = url;
 
   const boton = document.getElementById('btnDescargar');
