@@ -726,6 +726,7 @@ function abrirSolicitudVacaciones() {
   document.getElementById('vacFechaFin').value = '';
   document.getElementById('vacMotivo').value = '';
   document.getElementById('vacDiasInfo').style.display = 'none';
+  cargarHistorialSolicitudes();
 }
 
 function cerrarModalVacaciones() {
@@ -823,7 +824,7 @@ function enviarSolicitudVacaciones() {
       document.body.removeChild(form);
       document.body.removeChild(iframe);
       cerrarModalVacaciones();
-      cargarHistorialSolicitudes();
+// cargarHistorialSolicitudes se carga al abrir el modal
     }, 2000);
   };
 
