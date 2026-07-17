@@ -62,6 +62,26 @@
 <script>
 const ADMIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuIoP9HAARvqU6llb3l1OX1Ys75uteRmhokrsdSs9NKm1oBvR7MLkwyUn5HBI2eJBv/exec';
 const CLAVE_SECRETA = 'andresraiz2026';
+
+function jsonpFetch(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'jsonp_cb_' + Math.random().toString(36).substr(2);
+    const sep = url.includes('?') ? '&' : '?';
+    const script = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + sep + 'callback=' + cbName;
+    script.onerror = function() {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('JSONP request failed'));
+    };
+    document.body.appendChild(script);
+  });
+}
 let todasLasSolicitudes = [];
 
 function cerrarSesion() {
@@ -79,8 +99,7 @@ async function cargarSolicitudesAdmin() {
   }
 
   try {
-    const res = await fetch(ADMIN_SCRIPT_URL + '?action=solicitudes&clave=' + CLAVE_SECRETA);
-    const data = await res.json();
+    const data = await jsonpFetch(ADMIN_SCRIPT_URL + '?action=solicitudes&clave=' + CLAVE_SECRETA);
     todasLasSolicitudes = data.data;
 
     const pendientes = todasLasSolicitudes.filter(s => s.Estado === 'Pendiente').length;
@@ -163,8 +182,7 @@ async function responderSolicitud(id, accion) {
 
   try {
     const url = ADMIN_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=' + accion + '&id=' + encodeURIComponent(id) + '&aprobadoPor=' + encodeURIComponent(nombreAdmin) + '&observaciones=' + encodeURIComponent(observaciones);
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await jsonpFetch(url);
     if (data.success) {
       alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');
       cargarSolicitudesAdmin();

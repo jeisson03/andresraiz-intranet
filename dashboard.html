@@ -719,6 +719,26 @@ async function generarCertificado() {
 const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuIoP9HAARvqU6llb3l1OX1Ys75uteRmhokrsdSs9NKm1oBvR7MLkwyUn5HBI2eJBv/exec';
 const CLAVE_SECRETA = 'andresraiz2026';
 
+function jsonpFetch(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'jsonp_cb_' + Math.random().toString(36).substr(2);
+    const sep = url.includes('?') ? '&' : '?';
+    const script = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + sep + 'callback=' + cbName;
+    script.onerror = function() {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('JSONP request failed'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
 function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
   cargarDisponiblesVacaciones();
@@ -746,8 +766,7 @@ async function cargarDisponiblesVacaciones() {
     return;
   }
   try {
-    const res = await fetch(VAC_SCRIPT_URL + '?action=disponibles&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
-    const data = await res.json();
+    const data = await jsonpFetch(VAC_SCRIPT_URL + '?action=disponibles&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
     document.getElementById('vacDispDisponibles').innerText = data.disponibles;
     document.getElementById('vacDispTomadas').innerText = data.tomadas;
     document.getElementById('vacDispAcumuladas').innerText = data.acumuladas;
@@ -803,10 +822,7 @@ async function enviarSolicitudVacaciones() {
 
   try {
     const url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=nueva_solicitud&cedula=' + encodeURIComponent(empleado.cedula) + '&nombre=' + encodeURIComponent(empleado.nombre) + '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) + '&fechaFin=' + encodeURIComponent(fechaFinFmt) + '&dias=' + dias + '&motivo=' + encodeURIComponent(motivo);
-    const res = await fetch(url, { redirect: 'follow' });
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch(e) { data = { raw: text }; }
+    const data = await jsonpFetch(url);
     if (data.success) {
       alert('Solicitud enviada exitosamente');
       cerrarModalVacaciones();
@@ -828,8 +844,7 @@ async function cargarHistorialSolicitudes() {
   }
 
   try {
-    const res = await fetch(VAC_SCRIPT_URL + '?action=solicitudes&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
-    const data = await res.json();
+    const data = await jsonpFetch(VAC_SCRIPT_URL + '?action=solicitudes&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
 
     if (data.data.length === 0) {
       container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';

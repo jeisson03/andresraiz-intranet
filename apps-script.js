@@ -1,10 +1,18 @@
 const CLAVE_SECRETA = "andresraiz2026";
 
 function doGet(e) {
+  var callback = e.parameter.callback;
+
+  function jsonResp(data) {
+    var json = JSON.stringify(data);
+    if (callback) {
+      return ContentService.createTextOutput(callback + '(' + json + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
+  }
+
   if (!e || !e.parameter || !e.parameter.clave || e.parameter.clave !== CLAVE_SECRETA) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ error: "Acceso denegado" })
-    ).setMimeType(ContentService.MimeType.JSON);
+    return jsonResp({ error: "Acceso denegado" });
   }
 
   var action = e.parameter.action;
@@ -16,11 +24,7 @@ function doGet(e) {
     var periodo = e.parameter.periodo;
 
     var sheet = ss.getSheetByName("colillas");
-    if (!sheet) {
-      return ContentService.createTextOutput(
-        JSON.stringify({ error: "Hoja no encontrada" })
-      ).setMimeType(ContentService.MimeType.JSON);
-    }
+    if (!sheet) return jsonResp({ error: "Hoja no encontrada" });
 
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
@@ -33,29 +37,25 @@ function doGet(e) {
       }
 
       if (row.usuario === usuario && row.periodo === periodo) {
-        return ContentService.createTextOutput(
-          JSON.stringify({
-            usuario: row.usuario,
-            periodo: row.periodo,
-            salario: row.salario,
-            transporte: row.transporte,
-            rodamiento: row.rodamiento,
-            comisiones: row.comisiones
-          })
-        ).setMimeType(ContentService.MimeType.JSON);
+        return jsonResp({
+          usuario: row.usuario,
+          periodo: row.periodo,
+          salario: row.salario,
+          transporte: row.transporte,
+          rodamiento: row.rodamiento,
+          comisiones: row.comisiones
+        });
       }
     }
 
-    return ContentService.createTextOutput(
-      JSON.stringify({ error: "Colilla no encontrada" })
-    ).setMimeType(ContentService.MimeType.JSON);
+    return jsonResp({ error: "Colilla no encontrada" });
   }
 
-  // ==================== SOLICITUDES VACACIONES ====================
+  // ==================== SOLICITUDES ====================
   if (action === 'solicitudes') {
     var cedula = e.parameter.cedula;
     var sheet = ss.getSheetByName('solicitudes');
-    if (!sheet) return ContentService.createTextOutput(JSON.stringify({data: []})).setMimeType(ContentService.MimeType.JSON);
+    if (!sheet) return jsonResp({data: []});
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
     var results = [];
@@ -70,7 +70,7 @@ function doGet(e) {
         results.push(obj);
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({data: results})).setMimeType(ContentService.MimeType.JSON);
+    return jsonResp({data: results});
   }
 
   // ==================== DISPONIBLES ====================
@@ -87,10 +87,10 @@ function doGet(e) {
         var meses = (hoy.getFullYear() - ingreso.getFullYear()) * 12 + (hoy.getMonth() - ingreso.getMonth());
         var acumuladas = Math.floor((15 / 12) * meses);
         var disponibles = Math.max(acumuladas - tomadas, 0);
-        return ContentService.createTextOutput(JSON.stringify({disponibles: disponibles, tomadas: tomadas, acumuladas: acumuladas})).setMimeType(ContentService.MimeType.JSON);
+        return jsonResp({disponibles: disponibles, tomadas: tomadas, acumuladas: acumuladas});
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({disponibles: 0})).setMimeType(ContentService.MimeType.JSON);
+    return jsonResp({disponibles: 0});
   }
 
   // ==================== NUEVA SOLICITUD ====================
@@ -118,10 +118,10 @@ function doGet(e) {
       ''
     ]);
 
-    return ContentService.createTextOutput(JSON.stringify({success: true, id: id})).setMimeType(ContentService.MimeType.JSON);
+    return jsonResp({success: true, id: id});
   }
 
-  // ==================== APROBAR ====================
+  // ==================== APROBAR / RECHAZAR ====================
   if (action === 'aprobar' || action === 'rechazar') {
     var sheet = ss.getSheetByName('solicitudes');
     var data = sheet.getDataRange().getValues();
@@ -149,11 +149,11 @@ function doGet(e) {
           }
         }
 
-        return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+        return jsonResp({success: true});
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({error: 'No encontrada'})).setMimeType(ContentService.MimeType.JSON);
+    return jsonResp({error: 'No encontrada'});
   }
 
-  return ContentService.createTextOutput(JSON.stringify({error: 'Accion no valida'})).setMimeType(ContentService.MimeType.JSON);
+  return jsonResp({error: 'Accion no valida'});
 }
