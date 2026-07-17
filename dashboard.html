@@ -717,6 +717,7 @@ async function generarCertificado() {
 // SOLICITUD VACACIONES
 // =========================
 const VAC_SCRIPT_URL = '';
+const CLAVE_SECRETA = 'andresraiz2026';
 
 function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
@@ -745,7 +746,7 @@ async function cargarDisponiblesVacaciones() {
     return;
   }
   try {
-    const res = await fetch(VAC_SCRIPT_URL + '?action=disponibles&cedula=' + empleado.cedula);
+    const res = await fetch(VAC_SCRIPT_URL + '?action=disponibles&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
     const data = await res.json();
     document.getElementById('vacDispDisponibles').innerText = data.disponibles;
     document.getElementById('vacDispTomadas').innerText = data.tomadas;
@@ -805,6 +806,7 @@ async function enviarSolicitudVacaciones() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        clave: CLAVE_SECRETA,
         cedula: empleado.cedula,
         nombre: empleado.nombre,
         fechaInicio: fechaInicioFmt,
@@ -833,7 +835,7 @@ async function cargarHistorialSolicitudes() {
   }
 
   try {
-    const res = await fetch(VAC_SCRIPT_URL + '?action=solicitudes&cedula=' + empleado.cedula);
+    const res = await fetch(VAC_SCRIPT_URL + '?action=solicitudes&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
     const data = await res.json();
 
     if (data.data.length === 0) {

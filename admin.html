@@ -61,6 +61,7 @@
 
 <script>
 const ADMIN_SCRIPT_URL = '';
+const CLAVE_SECRETA = 'andresraiz2026';
 let todasLasSolicitudes = [];
 
 function cerrarSesion() {
@@ -78,7 +79,7 @@ async function cargarSolicitudesAdmin() {
   }
 
   try {
-    const res = await fetch(ADMIN_SCRIPT_URL + '?action=solicitudes');
+    const res = await fetch(ADMIN_SCRIPT_URL + '?action=solicitudes&clave=' + CLAVE_SECRETA);
     const data = await res.json();
     todasLasSolicitudes = data.data;
 
@@ -165,6 +166,7 @@ async function responderSolicitud(id, accion) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        clave: CLAVE_SECRETA,
         action: accion,
         id: id,
         aprobadoPor: nombreAdmin,
