@@ -49,6 +49,7 @@ body {
 .login-logo img {
   width: 160px;
   height: auto;
+  filter: invert(1);
 }
 
 .login-title {
