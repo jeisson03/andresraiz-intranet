@@ -103,34 +103,6 @@ function doGet(e) {
     return jsonResp({disponibles: 0});
   }
 
-  // ==================== NUEVA SOLICITUD ====================
-  if (action === 'nueva_solicitud') {
-    var sheet = ss.getSheetByName('solicitudes');
-    if (!sheet) {
-      sheet = ss.insertSheet('solicitudes');
-      sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
-    }
-
-    var id = 'SOL-' + new Date().getTime();
-    var fechaSolicitud = Utilities.formatDate(new Date(), 'America/Bogota', 'dd/MM/yyyy');
-
-    sheet.appendRow([
-      id,
-      e.parameter.cedula || '',
-      e.parameter.nombre || '',
-      fechaSolicitud,
-      e.parameter.fechaInicio || '',
-      e.parameter.fechaFin || '',
-      e.parameter.dias || '',
-      e.parameter.motivo || '',
-      'Pendiente',
-      '',
-      ''
-    ]);
-
-    return jsonResp({success: true, id: id});
-  }
-
   // ==================== APROBAR / RECHAZAR ====================
   if (action === 'aprobar' || action === 'rechazar') {
     var sheet = ss.getSheetByName('solicitudes');
@@ -178,7 +150,13 @@ function doGet(e) {
                   }
                 }
                 var actuales = parseInt(empData[j][vacIdx]) || 0;
-                empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + parseInt(data[i][headers.indexOf('Dias')] || data[i][headers.indexOf('D\u00edas')] || 0));
+                var diasVal = 0;
+                var diasKeys = ['Días Hábiles', 'Dias Habiles', 'Días', 'Dias'];
+                for (var dk = 0; dk < diasKeys.length; dk++) {
+                  var idx = headers.indexOf(diasKeys[dk]);
+                  if (idx >= 0 && data[i][idx]) { diasVal = parseInt(data[i][idx]) || 0; break; }
+                }
+                empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + diasVal);
                 break;
               }
             }
@@ -196,7 +174,7 @@ function doGet(e) {
     var sheet = ss.getSheetByName('solicitudes');
     if (!sheet) {
       sheet = ss.insertSheet('solicitudes');
-      sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+      sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días Calendario', 'Días Hábiles', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
     }
 
     var id = 'SOL-' + new Date().getTime();
@@ -209,7 +187,8 @@ function doGet(e) {
       fechaSolicitud,
       e.parameter.fechaInicio || '',
       e.parameter.fechaFin || '',
-      e.parameter.dias || '',
+      e.parameter.diasCalendario || '',
+      e.parameter.diasHabiles || '',
       e.parameter.motivo || '',
       'Pendiente',
       '',
@@ -248,7 +227,7 @@ function doPost(e) {
     var sheet = ss.getSheetByName('solicitudes');
     if (!sheet) {
       sheet = ss.insertSheet('solicitudes');
-      sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+      sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días Calendario', 'Días Hábiles', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
     }
 
     var id = 'SOL-' + new Date().getTime();
@@ -261,7 +240,8 @@ function doPost(e) {
       fechaSolicitud,
       params.fechaInicio || '',
       params.fechaFin || '',
-      params.dias || '',
+      params.diasCalendario || '',
+      params.diasHabiles || '',
       params.motivo || '',
       'Pendiente',
       '',
@@ -291,7 +271,13 @@ function doPost(e) {
             if (empData[j][empHeaders.indexOf('cedula')] == data[i][headers.indexOf('Cedula')]) {
               var vacIdx = empHeaders.indexOf('vacaciones');
               var actuales = parseInt(empData[j][vacIdx]) || 0;
-              empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + parseInt(data[i][headers.indexOf('Dias')]));
+              var diasVal2 = 0;
+              var diasKeys2 = ['Días Hábiles', 'Dias Habiles', 'Días', 'Dias'];
+              for (var dk2 = 0; dk2 < diasKeys2.length; dk2++) {
+                var idx2 = headers.indexOf(diasKeys2[dk2]);
+                if (idx2 >= 0 && data[i][idx2]) { diasVal2 = parseInt(data[i][idx2]) || 0; break; }
+              }
+              empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + diasVal2);
               break;
             }
           }
