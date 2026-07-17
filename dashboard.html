@@ -785,7 +785,7 @@ function enviarSolicitudVacaciones() {
   form.method = 'POST';
   form.action = VAC_SCRIPT_URL;
   form.target = iframeName;
-  form enctype = 'text/plain';
+  form.enctype = 'text/plain';
 
   const fields = {
     clave: CLAVE_SECRETA,
@@ -880,7 +880,7 @@ function cargarHistorialSolicitudes() {
   iframe.src = VAC_SCRIPT_URL + '?' + params.toString();
 }
 
-cargarHistorialSolicitudes();
+// El historial se carga solo cuando se abre el modal de vacaciones
 </script>
 
 </body>
