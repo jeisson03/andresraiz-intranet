@@ -159,7 +159,19 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  var params = e.parameter;
+  var params = {};
+
+  if (e.parameter && Object.keys(e.parameter).length > 0) {
+    params = e.parameter;
+  } else if (e.postData && e.postData.contents) {
+    var lines = e.postData.contents.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var idx = lines[i].indexOf('=');
+      if (idx > -1) {
+        params[lines[i].substring(0, idx)] = lines[i].substring(idx + 1);
+      }
+    }
+  }
 
   if (!params.clave || params.clave !== CLAVE_SECRETA) {
     return ContentService.createTextOutput(JSON.stringify({error: 'Acceso denegado'})).setMimeType(ContentService.MimeType.JSON);

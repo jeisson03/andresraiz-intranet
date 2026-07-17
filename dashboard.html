@@ -831,53 +831,59 @@ function enviarSolicitudVacaciones() {
   form.submit();
 }
 
+function jsonpFetch(url) {
+  return new Promise(function(resolve, reject) {
+    var cbName = 'jsonp_cb_' + Math.random().toString(36).substr(2);
+    var sep = url.includes('?') ? '&' : '?';
+    var script = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + sep + 'callback=' + cbName;
+    script.onerror = function() {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('JSONP request failed'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
 function cargarHistorialSolicitudes() {
-  const container = document.getElementById('listaSolicitudes');
+  var container = document.getElementById('listaSolicitudes');
   container.innerHTML = '<p class="vac-empty">Cargando...</p>';
 
-  const params = new URLSearchParams({ clave: CLAVE_SECRETA, action: 'solicitudes', cedula: empleado.cedula });
-  const iframeName = 'vac_hist_' + Date.now();
-  const iframe = document.createElement('iframe');
-  iframe.name = iframeName;
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
+  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=solicitudes&cedula=' + encodeURIComponent(empleado.cedula);
 
-  iframe.onload = function() {
-    setTimeout(function() {
-      try {
-        const text = iframe.contentDocument.body.innerText || '';
-        const data = JSON.parse(text);
-        if (!data.data || data.data.length === 0) {
-          container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
-        } else {
-          const solicitudes = data.data.slice().reverse();
-          container.innerHTML = solicitudes.map(function(s) {
-            var estadoClass = 'vac-estado-pendiente';
-            var estadoIcono = '\u23F3';
-            if (s.Estado === 'Aprobada') { estadoClass = 'vac-estado-aprobada'; estadoIcono = '\u2705'; }
-            if (s.Estado === 'Rechazada') { estadoClass = 'vac-estado-rechazada'; estadoIcono = '\u274C'; }
-            return '<div class="vac-solicitud-item">' +
-              '<div class="vac-solicitud-top">' +
-                '<span class="vac-solicitud-fechas">' + (s['Fecha Inicio']||'') + ' - ' + (s['Fecha Fin']||'') + '</span>' +
-                '<span class="vac-solicitud-dias">' + (s.Dias||'') + ' dias</span>' +
-              '</div>' +
-              '<div class="vac-solicitud-motivo">' + (s.Motivo||'') + '</div>' +
-              '<div class="vac-solicitud-bottom">' +
-                '<span class="vac-solicitud-fecha">Solicitado: ' + (s['Fecha Solicitud']||'') + '</span>' +
-                '<span class="vac-solicitud-estado ' + estadoClass + '">' + estadoIcono + ' ' + (s.Estado||'') + '</span>' +
-              '</div>' +
-              (s.Observaciones ? '<div class="vac-solicitud-obs"><b>Observaciones:</b> ' + s.Observaciones + '</div>' : '') +
-            '</div>';
-          }).join('');
-        }
-      } catch(e) {
-        container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
-      }
-      document.body.removeChild(iframe);
-    }, 3000);
-  };
-
-  iframe.src = VAC_SCRIPT_URL + '?' + params.toString();
+  jsonpFetch(url).then(function(data) {
+    if (!data.data || data.data.length === 0) {
+      container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
+    } else {
+      var solicitudes = data.data.slice().reverse();
+      container.innerHTML = solicitudes.map(function(s) {
+        var estadoClass = 'vac-estado-pendiente';
+        var estadoIcono = '\u23F3';
+        if (s.Estado === 'Aprobada') { estadoClass = 'vac-estado-aprobada'; estadoIcono = '\u2705'; }
+        if (s.Estado === 'Rechazada') { estadoClass = 'vac-estado-rechazada'; estadoIcono = '\u274C'; }
+        return '<div class="vac-solicitud-item">' +
+          '<div class="vac-solicitud-top">' +
+            '<span class="vac-solicitud-fechas">' + (s['Fecha Inicio']||'') + ' - ' + (s['Fecha Fin']||'') + '</span>' +
+            '<span class="vac-solicitud-dias">' + (s.Dias||'') + ' dias</span>' +
+          '</div>' +
+          '<div class="vac-solicitud-motivo">' + (s.Motivo||'') + '</div>' +
+          '<div class="vac-solicitud-bottom">' +
+            '<span class="vac-solicitud-fecha">Solicitado: ' + (s['Fecha Solicitud']||'') + '</span>' +
+            '<span class="vac-solicitud-estado ' + estadoClass + '">' + estadoIcono + ' ' + (s.Estado||'') + '</span>' +
+          '</div>' +
+          (s.Observaciones ? '<div class="vac-solicitud-obs"><b>Observaciones:</b> ' + s.Observaciones + '</div>' : '') +
+        '</div>';
+      }).join('');
+    }
+  }).catch(function() {
+    container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
+  });
 }
 
 // El historial se carga solo cuando se abre el modal de vacaciones
