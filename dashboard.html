@@ -97,7 +97,7 @@
     </button>
     <button class="dash-btn dash-btn-vacation" onclick="abrirSolicitudVacaciones()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Solicitar vacaciones
+      Solicitar semana de vacaciones
     </button>
     <button id="btnAdmin" class="dash-btn dash-btn-admin" style="display:none;" onclick="window.open('admin.html','_blank')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -142,9 +142,7 @@
           <input type="date" id="vacFechaInicio" onchange="onSelectFechaInicio()">
         </div>
         <div class="vac-dias-info" id="vacDiasInfo" style="display:none;">
-          <div style="font-size:14px;"><span id="vacDiasCalendario">7</span> días calendario</div>
-          <div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días hábiles</div>
-          <div style="font-size:11px;color:#999;margin-top:2px;">(lunes a domingo — 7 días)</div>
+          <div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días — lunes a domingo</div>
         </div>
         <div class="vac-form-group">
           <label>Motivo</label>
@@ -779,10 +777,7 @@ function onSelectFechaInicio() {
     dInicio.setDate(dInicio.getDate() + diasHastaLunes);
     document.getElementById('vacFechaInicio').value = dInicio.toISOString().split('T')[0];
   }
-  var dFin = new Date(dInicio);
-  dFin.setDate(dFin.getDate() + 6);
   document.getElementById('vacDiasInfo').style.display = 'block';
-  document.getElementById('vacDiasCalendario').innerText = '7';
 }
 
 async function cargarDisponiblesVacaciones() {
@@ -853,8 +848,7 @@ function enviarSolicitudVacaciones() {
     '&nombre=' + encodeURIComponent(empleado.nombre) +
     '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) +
     '&fechaFin=' + encodeURIComponent(fechaFinFmt) +
-    '&diasCalendario=7' +
-    '&diasHabiles=7' +
+    '&dias=7' +
     '&motivo=' + encodeURIComponent(motivo);
 
   jsonpFetch(url).then(function(data) {
@@ -917,7 +911,7 @@ function cargarHistorialSolicitudes() {
         return '<div class="vac-solicitud-item">' +
           '<div class="vac-solicitud-top">' +
             '<span class="vac-solicitud-fechas">' + (s['Fecha Inicio']||'') + ' - ' + (s['Fecha Fin']||'') + '</span>' +
-            '<span class="vac-solicitud-dias">' + (s['Días Hábiles'] || s['Dias Habiles'] || s['Días'] || s.Dias || '') + ' hab.</span>' +
+            '<span class="vac-solicitud-dias">' + (s['Días'] || s.Dias || '') + ' días</span>' +
           '</div>' +
           '<div class="vac-solicitud-motivo">' + (s.Motivo||'') + '</div>' +
           '<div class="vac-solicitud-bottom">' +

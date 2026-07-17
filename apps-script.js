@@ -185,7 +185,7 @@ function doGet(e) {
                 }
                 var actuales = parseInt(empData[j][vacIdx]) || 0;
                 var diasVal = 0;
-                var diasKeys = ['Días Hábiles', 'Dias Habiles', 'Días', 'Dias'];
+                var diasKeys = ['Días', 'Dias'];
                 for (var dk = 0; dk < diasKeys.length; dk++) {
                   var idx = headers.indexOf(diasKeys[dk]);
                   if (idx >= 0 && data[i][idx]) { diasVal = parseInt(data[i][idx]) || 0; break; }
@@ -208,7 +208,7 @@ function doGet(e) {
     var sheet = ss.getSheetByName('solicitudes');
     if (!sheet) {
       sheet = ss.insertSheet('solicitudes');
-      sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días Calendario', 'Días Hábiles', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+      sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
     }
 
     var id = 'SOL-' + new Date().getTime();
@@ -221,8 +221,7 @@ function doGet(e) {
       fechaSolicitud,
       e.parameter.fechaInicio || '',
       e.parameter.fechaFin || '',
-      e.parameter.diasCalendario || '',
-      e.parameter.diasHabiles || '',
+      e.parameter.dias || '7',
       e.parameter.motivo || '',
       'Pendiente',
       '',
@@ -261,7 +260,7 @@ function doPost(e) {
     var sheet = ss.getSheetByName('solicitudes');
     if (!sheet) {
       sheet = ss.insertSheet('solicitudes');
-      sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días Calendario', 'Días Hábiles', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+      sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
     }
 
     var id = 'SOL-' + new Date().getTime();
@@ -274,8 +273,7 @@ function doPost(e) {
       fechaSolicitud,
       params.fechaInicio || '',
       params.fechaFin || '',
-      params.diasCalendario || '',
-      params.diasHabiles || '',
+      params.dias || '7',
       params.motivo || '',
       'Pendiente',
       '',
@@ -306,7 +304,7 @@ function doPost(e) {
               var vacIdx = empHeaders.indexOf('vacaciones');
               var actuales = parseInt(empData[j][vacIdx]) || 0;
               var diasVal2 = 0;
-              var diasKeys2 = ['Días Hábiles', 'Dias Habiles', 'Días', 'Dias'];
+              var diasKeys2 = ['Días', 'Dias'];
               for (var dk2 = 0; dk2 < diasKeys2.length; dk2++) {
                 var idx2 = headers.indexOf(diasKeys2[dk2]);
                 if (idx2 >= 0 && data[i][idx2]) { diasVal2 = parseInt(data[i][idx2]) || 0; break; }
