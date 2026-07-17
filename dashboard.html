@@ -76,6 +76,16 @@
     </div>
   </div>
 
+  <div class="dash-card" id="vacacionesColectivasCard" style="display:none;">
+    <div class="dash-vac-header">
+      <div class="dash-vac-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="dash-vac-title">Vacaciones Colectivas</span>
+    </div>
+    <div id="listaColectivas" style="padding: 0 10px;"></div>
+  </div>
+
   <div class="dash-btn-group">
     <button class="dash-btn dash-btn-primary" onclick="descargarColilla()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -122,19 +132,19 @@
             <span class="vac-disp-num" id="vacDispAcumuladas">0</span>
             <span class="vac-disp-label">Acumulados</span>
           </div>
+          <div class="vac-disp-item">
+            <span class="vac-disp-num" id="vacDispColectivas" style="color:#e74c3c;">0</span>
+            <span class="vac-disp-label">Colectivas</span>
+          </div>
         </div>
         <div class="vac-form-group">
-          <label>Fecha de inicio</label>
-          <input type="date" id="vacFechaInicio" onchange="calcularDiasVacaciones();var f=document.getElementById('vacFechaFin').value;document.getElementById('vacFechaFin').min=this.value;if(f&&f<this.value){document.getElementById('vacFechaFin').value='';}">
-        </div>
-        <div class="vac-form-group">
-          <label>Fecha de fin</label>
-          <input type="date" id="vacFechaFin" onchange="calcularDiasVacaciones()">
+          <label>Semana de vacaciones (lunes a domingo)</label>
+          <input type="date" id="vacFechaInicio" onchange="onSelectFechaInicio()">
         </div>
         <div class="vac-dias-info" id="vacDiasInfo" style="display:none;">
-          <div><span id="vacDiasCalendario">0</span> días calendario</div>
-          <div style="font-size:18px;font-weight:800;color:#5a4bd1;"><span id="vacDiasHabiles">0</span> días hábiles</div>
-          <div style="font-size:11px;color:#999;margin-top:2px;">(sábados, domingos y festivos no se cuentan)</div>
+          <div style="font-size:14px;"><span id="vacDiasCalendario">7</span> días calendario</div>
+          <div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días hábiles</div>
+          <div style="font-size:11px;color:#999;margin-top:2px;">(lunes a domingo — 7 días)</div>
         </div>
         <div class="vac-form-group">
           <label>Motivo</label>
@@ -175,6 +185,9 @@
 const empleado = JSON.parse(localStorage.getItem('empleado'));
 if (!empleado) window.location.href = "index.html";
 
+const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP0G9yFjJG9hl2lXQ_3lU2nlWtZch2HPV4-AVqP8FTQi-GqIlQci41oUMOX3JUsEbi/exec';
+const CLAVE_SECRETA = 'andresraiz2026';
+
 // =========================
 // DATOS
 // =========================
@@ -190,18 +203,31 @@ document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO',
 // =========================
 // VACACIONES
 // =========================
-const hoy = new Date();
-const meses = (hoy.getFullYear() - fecha.getFullYear()) * 12 + (hoy.getMonth() - fecha.getMonth());
+const hoyDash = new Date();
+const mesesDash = (hoyDash.getFullYear() - fecha.getFullYear()) * 12 + (hoyDash.getMonth() - fecha.getMonth());
 
-const acumuladas = Math.floor((15 / 12) * meses);
-const tomadas = parseInt(empleado.vacaciones || 0);
-const disponibles = Math.max(acumuladas - tomadas, 0);
+const acumuladasDash = Math.floor((15 / 12) * mesesDash);
+const tomadasDash = parseInt(empleado.vacaciones || 0);
+const disponiblesDash = Math.max(acumuladasDash - tomadasDash, 0);
 
-document.getElementById('vacacionesTomadas').innerText = tomadas;
-document.getElementById('vacacionesDisponibles').innerText = disponibles;
+document.getElementById('vacacionesTomadas').innerText = tomadasDash;
+document.getElementById('vacacionesDisponibles').innerText = disponiblesDash;
 
-const porcentaje = acumuladas > 0 ? (tomadas / acumuladas) * 100 : 0;
-document.getElementById("progreso").style.width = porcentaje + "%";
+const porcentajeDash = acumuladasDash > 0 ? (tomadasDash / acumuladasDash) * 100 : 0;
+document.getElementById("progreso").style.width = porcentajeDash + "%";
+
+(function() {
+  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=disponibles&cedula=' + encodeURIComponent(empleado.cedula);
+  jsonpFetch(url).then(function(data) {
+    if (data.disponibles !== undefined) {
+      document.getElementById('vacacionesDisponibles').innerText = data.disponibles;
+      document.getElementById('vacacionesTomadas').innerText = data.tomadas || tomadasDash;
+      var total = data.acumuladas || acumuladasDash;
+      var usados = data.tomadas || tomadasDash;
+      document.getElementById("progreso").style.width = (total > 0 ? (usados / total) * 100 : 0) + "%";
+    }
+  }).catch(function() {});
+})();
 
 if (empleado.admin === true || empleado.admin === 'TRUE' || empleado.admin === 'true' || empleado.admin === true) {
   document.getElementById('btnAdmin').style.display = 'flex';
@@ -726,8 +752,6 @@ async function generarCertificado() {
 // =========================
 // SOLICITUD VACACIONES
 // =========================
-const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP0G9yFjJG9hl2lXQ_3lU2nlWtZch2HPV4-AVqP8FTQi-GqIlQci41oUMOX3JUsEbi/exec';
-const CLAVE_SECRETA = 'andresraiz2026';
 
 function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
@@ -736,9 +760,6 @@ function abrirSolicitudVacaciones() {
   var hoy = new Date().toISOString().split('T')[0];
   document.getElementById('vacFechaInicio').value = '';
   document.getElementById('vacFechaInicio').min = hoy;
-  document.getElementById('vacFechaFin').value = '';
-  document.getElementById('vacFechaFin').min = hoy;
-  document.getElementById('vacMotivo').value = '';
   document.getElementById('vacDiasInfo').style.display = 'none';
   cargarHistorialSolicitudes();
 }
@@ -747,104 +768,65 @@ function cerrarModalVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'none';
 }
 
-async function cargarDisponiblesVacaciones() {
-  const fechaIngreso = new Date(empleado.ingreso);
-  const hoy = new Date();
-  const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
-  const acumuladas = Math.floor((15 / 12) * meses);
-  const tomadas = parseInt(empleado.vacaciones || 0);
-  const disponibles = Math.max(acumuladas - tomadas, 0);
-  document.getElementById('vacDispDisponibles').innerText = disponibles;
-  document.getElementById('vacDispTomadas').innerText = tomadas;
-  document.getElementById('vacDispAcumuladas').innerText = acumuladas;
-}
-
-function calcularPascua(anio) {
-  var a = anio % 19;
-  var b = Math.floor(anio / 100);
-  var c = anio % 100;
-  var d = Math.floor(b / 4);
-  var e = b % 4;
-  var f = Math.floor((b + 8) / 25);
-  var g = Math.floor((b - f + 1) / 3);
-  var h = (19 * a + b - d - g + 15) % 30;
-  var i = Math.floor(c / 4);
-  var k = c % 4;
-  var l = (32 + 2 * e + 2 * i - h - k) % 7;
-  var m = Math.floor((a + 11 * h + 22 * l) / 451);
-  var mes = Math.floor((h + l - 7 * m + 114) / 31) - 1;
-  var dia = ((h + l - 7 * m + 114) % 31) + 1;
-  return new Date(anio, mes, dia);
-}
-
-function esFestivoColombiano(fecha) {
-  var anio = fecha.getFullYear();
-  var mes = fecha.getMonth();
-  var dia = fecha.getDate();
-
-  var festivos = [
-    [0, 1],   // Año Nuevo
-    [0, 6],   // Reyes Magos
-    [2, 19],  // San José
-    [4, 1],   // Día del Trabajo
-    [6, 20],  // Independencia
-    [7, 7],   // Batalla de Boyacá
-    [7, 15],  // Asunción de la Virgen
-    [9, 12],  // Día de la Raza
-    [10, 1],  // Día de los Santos
-    [10, 11], // Independencia de Cartagena
-    [11, 8],  // Inmaculada Concepción
-    [11, 25]  // Navidad
-  ];
-
-  for (var i = 0; i < festivos.length; i++) {
-    if (mes === festivos[i][0] && dia === festivos[i][1]) return true;
-  }
-
-  var pascua = calcularPascua(anio);
-  var ascencion = new Date(pascua.getTime() + 39 * 86400000);
-  var corpus = new Date(pascua.getTime() + 60 * 86400000);
-  var corazon = new Date(pascua.getTime() + 68 * 86400000);
-  var juevesSanto = new Date(pascua.getTime() - 3 * 86400000);
-  var viernesSanto = new Date(pascua.getTime() - 2 * 86400000);
-
-  var moviles = [ascencion, corpus, corazon, juevesSanto, viernesSanto];
-  for (var j = 0; j < moviles.length; j++) {
-    if (fecha.getFullYear() === moviles[j].getFullYear() &&
-        fecha.getMonth() === moviles[j].getMonth() &&
-        fecha.getDate() === moviles[j].getDate()) return true;
-  }
-
-  return false;
-}
-
-function contarDiasHabiles(inicio, fin) {
-  var contador = 0;
-  var actual = new Date(inicio);
-  while (actual <= fin) {
-    var diaSemana = actual.getDay();
-    if (diaSemana !== 0 && !esFestivoColombiano(actual)) {
-      contador++;
-    }
-    actual.setDate(actual.getDate() + 1);
-  }
-  return contador;
-}
-
-function calcularDiasVacaciones() {
+function onSelectFechaInicio() {
   var inicio = document.getElementById('vacFechaInicio').value;
-  var fin = document.getElementById('vacFechaFin').value;
-  if (inicio && fin) {
-    var dInicio = new Date(inicio);
-    var dFin = new Date(fin);
-    if (dFin >= dInicio) {
-      var diasCalendario = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
-      var diasHabiles = contarDiasHabiles(dInicio, dFin);
-      document.getElementById('vacDiasInfo').style.display = 'block';
-      document.getElementById('vacDiasCalendario').innerText = diasCalendario;
-      document.getElementById('vacDiasHabiles').innerText = diasHabiles;
-    }
+  if (!inicio) return;
+  var dInicio = new Date(inicio);
+  var diaSemana = dInicio.getDay();
+  if (diaSemana !== 1) {
+    var diasHastaLunes = (8 - diaSemana) % 7;
+    if (diasHastaLunes === 0) diasHastaLunes = 7;
+    dInicio.setDate(dInicio.getDate() + diasHastaLunes);
+    document.getElementById('vacFechaInicio').value = dInicio.toISOString().split('T')[0];
   }
+  var dFin = new Date(dInicio);
+  dFin.setDate(dFin.getDate() + 6);
+  document.getElementById('vacDiasInfo').style.display = 'block';
+  document.getElementById('vacDiasCalendario').innerText = '7';
+}
+
+async function cargarDisponiblesVacaciones() {
+  const url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=disponibles&cedula=' + encodeURIComponent(empleado.cedula);
+  try {
+    const data = await jsonpFetch(url);
+    document.getElementById('vacDispDisponibles').innerText = data.disponibles || 0;
+    document.getElementById('vacDispTomadas').innerText = data.tomadas || 0;
+    document.getElementById('vacDispAcumuladas').innerText = data.acumuladas || 0;
+    document.getElementById('vacDispColectivas').innerText = data.colectivas || 0;
+  } catch(e) {
+    const fechaIngreso = new Date(empleado.ingreso);
+    const hoy = new Date();
+    const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
+    const acumuladas = Math.floor((15 / 12) * meses);
+    const tomadas = parseInt(empleado.vacaciones || 0);
+    const disponibles = Math.max(acumuladas - tomadas, 0);
+    document.getElementById('vacDispDisponibles').innerText = disponibles;
+    document.getElementById('vacDispTomadas').innerText = tomadas;
+    document.getElementById('vacDispAcumuladas').innerText = acumuladas;
+    document.getElementById('vacDispColectivas').innerText = 0;
+  }
+}
+
+function cargarVacacionesColectivas() {
+  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=vacaciones_colectivas';
+  jsonpFetch(url).then(function(data) {
+    if (!data.data || data.data.length === 0) return;
+    var hoy = new Date();
+    var proximas = data.data.filter(function(vc) {
+      var fin = new Date(vc['Fecha Fin'] || vc['Fecha fin'] || '');
+      return fin >= hoy;
+    });
+    if (proximas.length === 0) return;
+    document.getElementById('vacacionesColectivasCard').style.display = 'block';
+    document.getElementById('listaColectivas').innerHTML = proximas.map(function(vc) {
+      var inicio = vc['Fecha Inicio'] || vc['Fecha inicio'] || '';
+      var fin = vc['Fecha Fin'] || vc['Fecha fin'] || '';
+      var dias = vc['Días'] || vc['Dias'] || 7;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;">' +
+        '<div><b>' + inicio + ' — ' + fin + '</b><br><span style="font-size:12px;color:#888;">' + dias + ' días — aplica a todos los empleados</span></div>' +
+        '</div>';
+    }).join('');
+  }).catch(function() {});
 }
 
 function enviarSolicitudVacaciones() {
@@ -854,18 +836,14 @@ function enviarSolicitudVacaciones() {
   btn.innerHTML = 'Enviando...';
 
   var fechaInicio = document.getElementById('vacFechaInicio').value;
-  var fechaFin = document.getElementById('vacFechaFin').value;
   var motivo = document.getElementById('vacMotivo').value.trim();
 
-  if (!fechaInicio || !fechaFin) { alert('Selecciona las fechas de inicio y fin'); resetBtnEnviar(); return; }
+  if (!fechaInicio) { alert('Selecciona la semana de vacaciones'); resetBtnEnviar(); return; }
   if (!motivo) { alert('Escribe el motivo de tu solicitud'); resetBtnEnviar(); return; }
 
   var dInicio = new Date(fechaInicio);
-  var dFin = new Date(fechaFin);
-  if (dFin < dInicio) { alert('La fecha de fin no puede ser anterior a la de inicio'); resetBtnEnviar(); return; }
-
-  var diasCalendario = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
-  var diasHabiles = contarDiasHabiles(dInicio, dFin);
+  var dFin = new Date(dInicio);
+  dFin.setDate(dFin.getDate() + 6);
   var fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
   var fechaFinFmt = dFin.toLocaleDateString('es-CO');
 
@@ -875,8 +853,8 @@ function enviarSolicitudVacaciones() {
     '&nombre=' + encodeURIComponent(empleado.nombre) +
     '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) +
     '&fechaFin=' + encodeURIComponent(fechaFinFmt) +
-    '&diasCalendario=' + encodeURIComponent(String(diasCalendario)) +
-    '&diasHabiles=' + encodeURIComponent(String(diasHabiles)) +
+    '&diasCalendario=7' +
+    '&diasHabiles=7' +
     '&motivo=' + encodeURIComponent(motivo);
 
   jsonpFetch(url).then(function(data) {
@@ -957,6 +935,7 @@ function cargarHistorialSolicitudes() {
 
 // Cargar historial al entrar al dashboard
 cargarHistorialSolicitudes();
+cargarVacacionesColectivas();
 </script>
 
 </body>

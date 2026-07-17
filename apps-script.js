@@ -96,11 +96,45 @@ function doGet(e) {
         var hoy = new Date();
         var meses = (hoy.getFullYear() - ingreso.getFullYear()) * 12 + (hoy.getMonth() - ingreso.getMonth());
         var acumuladas = Math.floor((15 / 12) * meses);
-        var disponibles = Math.max(acumuladas - tomadas, 0);
-        return jsonResp({disponibles: disponibles, tomadas: tomadas, acumuladas: acumuladas});
+        var colectivas = 0;
+        var vcSheet = ss.getSheetByName('vacaciones_colectivas');
+        if (vcSheet) {
+          var vcData = vcSheet.getDataRange().getValues();
+          var vcHeaders = vcData[0];
+          var fiIdx = vcHeaders.indexOf('Fecha Inicio');
+          var ffIdx = vcHeaders.indexOf('Fecha Fin');
+          var diasIdx = vcHeaders.indexOf('Días');
+          if (diasIdx < 0) diasIdx = vcHeaders.indexOf('Dias');
+          for (var v = 1; v < vcData.length; v++) {
+            var vcInicio = new Date(vcData[v][fiIdx]);
+            var vcFin = new Date(vcData[v][ffIdx]);
+            if (hoy >= vcInicio && hoy <= vcFin) {
+              colectivas += parseInt(vcData[v][diasIdx]) || 0;
+            }
+          }
+        }
+        var disponibles = Math.max(acumuladas - tomadas - colectivas, 0);
+        return jsonResp({disponibles: disponibles, tomadas: tomadas, acumuladas: acumuladas, colectivas: colectivas});
       }
     }
     return jsonResp({disponibles: 0});
+  }
+
+  // ==================== VACACIONES COLECTIVAS ====================
+  if (action === 'vacaciones_colectivas') {
+    var vcSheet = ss.getSheetByName('vacaciones_colectivas');
+    if (!vcSheet) return jsonResp({data: []});
+    var vcData = vcSheet.getDataRange().getValues();
+    var vcHeaders = vcData[0];
+    var results = [];
+    for (var v = 1; v < vcData.length; v++) {
+      var obj = {};
+      for (var j = 0; j < vcHeaders.length; j++) {
+        obj[vcHeaders[j]] = vcData[v][j] instanceof Date ? Utilities.formatDate(vcData[v][j], 'America/Bogota', 'dd/MM/yyyy') : vcData[v][j];
+      }
+      results.push(obj);
+    }
+    return jsonResp({data: results});
   }
 
   // ==================== APROBAR / RECHAZAR ====================
