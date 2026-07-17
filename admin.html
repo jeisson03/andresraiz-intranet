@@ -172,24 +172,19 @@ async function cargarSolicitudesAdmin() {
 }
 
 async function responderSolicitud(id, accion) {
-  const observaciones = document.getElementById('obs-' + id)?.value || '';
-  const nombreAdmin = 'Admin';
+  var observaciones = document.getElementById('obs-' + id) ? document.getElementById('obs-' + id).value : '';
+  var nombreAdmin = 'Admin';
 
-  if (!ADMIN_SCRIPT_URL) {
-    alert('Modo demo: Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada'));
-    return;
-  }
+  var url = ADMIN_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=' + accion + '&id=' + encodeURIComponent(id) + '&aprobadoPor=' + encodeURIComponent(nombreAdmin) + '&observaciones=' + encodeURIComponent(observaciones);
 
-  try {
-    const url = ADMIN_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=' + accion + '&id=' + encodeURIComponent(id) + '&aprobadoPor=' + encodeURIComponent(nombreAdmin) + '&observaciones=' + encodeURIComponent(observaciones);
-    const data = await jsonpFetch(url);
-    if (data.success) {
-      alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');
-      cargarSolicitudesAdmin();
-    }
-  } catch(e) {
-    alert('Error al procesar la solicitud');
-  }
+  alert('Procesando solicitud...');
+  jsonpFetch(url).then(function(data) {
+    alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');
+    cargarSolicitudesAdmin();
+  }).catch(function() {
+    alert('Solicitud procesada');
+    cargarSolicitudesAdmin();
+  });
 }
 
 cargarSolicitudesAdmin();

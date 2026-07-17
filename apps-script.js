@@ -58,10 +58,20 @@ function doGet(e) {
     if (!sheet) return jsonResp({data: []});
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
+    var cedulaIdx = -1;
+    for (var h = 0; h < headers.length; h++) {
+      if (headers[h].toString().toLowerCase().replace(/[o]/g,'o') === 'cedula' || headers[h].toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() === 'cedula') {
+        cedulaIdx = h;
+        break;
+      }
+    }
     var results = [];
     for (var i = 1; i < data.length; i++) {
       var match = true;
-      if (cedula && data[i][headers.indexOf('Cedula')] != cedula) match = false;
+      if (cedula && cedulaIdx >= 0) {
+        var cellVal = data[i][cedulaIdx].toString().replace(/[^0-9]/g, '');
+        if (cellVal != cedula.toString().replace(/[^0-9]/g, '')) match = false;
+      }
       if (match) {
         var obj = {};
         for (var j = 0; j < headers.length; j++) {
@@ -139,12 +149,38 @@ function doGet(e) {
           var empSheet = ss.getSheetByName('empleados');
           var empData = empSheet.getDataRange().getValues();
           var empHeaders = empData[0];
-          for (var j = 1; j < empData.length; j++) {
-            if (empData[j][empHeaders.indexOf('cedula')] == data[i][headers.indexOf('Cedula')]) {
-              var vacIdx = empHeaders.indexOf('vacaciones');
-              var actuales = parseInt(empData[j][vacIdx]) || 0;
-              empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + parseInt(data[i][headers.indexOf('Dias')]));
+          var cedulaColIdx = -1;
+          for (var h = 0; h < empHeaders.length; h++) {
+            if (empHeaders[h].toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() === 'cedula') {
+              cedulaColIdx = h;
               break;
+            }
+          }
+          var solCedulaIdx = -1;
+          for (var h2 = 0; h2 < headers.length; h2++) {
+            if (headers[h2].toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() === 'cedula') {
+              solCedulaIdx = h2;
+              break;
+            }
+          }
+          if (cedulaColIdx >= 0 && solCedulaIdx >= 0) {
+            for (var j = 1; j < empData.length; j++) {
+              var empCed = empData[j][cedulaColIdx].toString().replace(/[^0-9]/g, '');
+              var solCed = data[i][solCedulaIdx].toString().replace(/[^0-9]/g, '');
+              if (empCed == solCed) {
+                var vacIdx = empHeaders.indexOf('vacaciones');
+                if (vacIdx < 0) {
+                  for (var vh = 0; vh < empHeaders.length; vh++) {
+                    if (empHeaders[vh].toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() === 'vacaciones') {
+                      vacIdx = vh;
+                      break;
+                    }
+                  }
+                }
+                var actuales = parseInt(empData[j][vacIdx]) || 0;
+                empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + parseInt(data[i][headers.indexOf('Dias')] || data[i][headers.indexOf('D\u00edas')] || 0));
+                break;
+              }
             }
           }
         }

@@ -722,8 +722,11 @@ const CLAVE_SECRETA = 'andresraiz2026';
 function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
   cargarDisponiblesVacaciones();
+  var hoy = new Date().toISOString().split('T')[0];
   document.getElementById('vacFechaInicio').value = '';
+  document.getElementById('vacFechaInicio').min = hoy;
   document.getElementById('vacFechaFin').value = '';
+  document.getElementById('vacFechaFin').min = hoy;
   document.getElementById('vacMotivo').value = '';
   document.getElementById('vacDiasInfo').style.display = 'none';
   cargarHistorialSolicitudes();
