@@ -760,75 +760,41 @@ function calcularDiasVacaciones() {
 }
 
 function enviarSolicitudVacaciones() {
-  const fechaInicio = document.getElementById('vacFechaInicio').value;
-  const fechaFin = document.getElementById('vacFechaFin').value;
-  const motivo = document.getElementById('vacMotivo').value.trim();
+  var fechaInicio = document.getElementById('vacFechaInicio').value;
+  var fechaFin = document.getElementById('vacFechaFin').value;
+  var motivo = document.getElementById('vacMotivo').value.trim();
 
   if (!fechaInicio || !fechaFin) { alert('Selecciona las fechas de inicio y fin'); return; }
   if (!motivo) { alert('Escribe el motivo de tu solicitud'); return; }
 
-  const dInicio = new Date(fechaInicio);
-  const dFin = new Date(fechaFin);
+  var dInicio = new Date(fechaInicio);
+  var dFin = new Date(fechaFin);
   if (dFin < dInicio) { alert('La fecha de fin no puede ser anterior a la de inicio'); return; }
 
-  const dias = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
-  const fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
-  const fechaFinFmt = dFin.toLocaleDateString('es-CO');
+  var dias = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
+  var fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
+  var fechaFinFmt = dFin.toLocaleDateString('es-CO');
 
-  const iframeName = 'vac_post_' + Date.now();
-  const iframe = document.createElement('iframe');
-  iframe.name = iframeName;
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
+  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA +
+    '&action=nueva_solicitud' +
+    '&cedula=' + encodeURIComponent(empleado.cedula) +
+    '&nombre=' + encodeURIComponent(empleado.nombre) +
+    '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) +
+    '&fechaFin=' + encodeURIComponent(fechaFinFmt) +
+    '&dias=' + encodeURIComponent(String(dias)) +
+    '&motivo=' + encodeURIComponent(motivo);
 
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = VAC_SCRIPT_URL;
-  form.target = iframeName;
-  form.enctype = 'text/plain';
-
-  const fields = {
-    clave: CLAVE_SECRETA,
-    action: 'nueva_solicitud',
-    cedula: empleado.cedula,
-    nombre: empleado.nombre,
-    fechaInicio: fechaInicioFmt,
-    fechaFin: fechaFinFmt,
-    dias: String(dias),
-    motivo: motivo
-  };
-
-  for (const [key, val] of Object.entries(fields)) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = val;
-    form.appendChild(input);
-  }
-
-  document.body.appendChild(form);
-
-  iframe.onload = function() {
-    setTimeout(function() {
-      try {
-        const text = iframe.contentDocument.body.innerText || '';
-        const data = JSON.parse(text);
-        if (data.success) {
-          alert('Solicitud enviada exitosamente');
-        } else {
-          alert('Solicitud enviada');
-        }
-      } catch(e) {
-        alert('Solicitud enviada');
-      }
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-      cerrarModalVacaciones();
-// cargarHistorialSolicitudes se carga al abrir el modal
-    }, 2000);
-  };
-
-  form.submit();
+  jsonpFetch(url).then(function(data) {
+    if (data.success) {
+      alert('Solicitud enviada exitosamente');
+    } else {
+      alert('Solicitud enviada');
+    }
+    cerrarModalVacaciones();
+    cargarHistorialSolicitudes();
+  }).catch(function() {
+    alert('Error al enviar la solicitud. Intente de nuevo.');
+  });
 }
 
 function jsonpFetch(url) {

@@ -155,6 +155,34 @@ function doGet(e) {
     return jsonResp({error: 'No encontrada'});
   }
 
+  // ==================== NUEVA SOLICITUD (GET) ====================
+  if (action === 'nueva_solicitud') {
+    var sheet = ss.getSheetByName('solicitudes');
+    if (!sheet) {
+      sheet = ss.insertSheet('solicitudes');
+      sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+    }
+
+    var id = 'SOL-' + new Date().getTime();
+    var fechaSolicitud = Utilities.formatDate(new Date(), 'America/Bogota', 'dd/MM/yyyy');
+
+    sheet.appendRow([
+      id,
+      e.parameter.cedula || '',
+      e.parameter.nombre || '',
+      fechaSolicitud,
+      e.parameter.fechaInicio || '',
+      e.parameter.fechaFin || '',
+      e.parameter.dias || '',
+      e.parameter.motivo || '',
+      'Pendiente',
+      '',
+      ''
+    ]);
+
+    return jsonResp({success: true, id: id});
+  }
+
   return jsonResp({error: 'Accion no valida'});
 }
 
