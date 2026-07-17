@@ -49,9 +49,6 @@ body {
 .login-logo img {
   width: 160px;
   height: auto;
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(255,255,255,0.95);
 }
 
 .login-title {
