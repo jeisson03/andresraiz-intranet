@@ -9,36 +9,18 @@ body {
 /* ========================= */
 .login-body {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a1a2e;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #e94560 100%);
   position: relative;
-  overflow: hidden;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .login-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #e94560 100%);
-  opacity: 1;
-}
-
-.login-bg::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 50%, rgba(240,108,0,0.15) 0%, transparent 50%),
-              radial-gradient(circle at 70% 80%, rgba(240,108,0,0.1) 0%, transparent 40%);
-  animation: bgPulse 8s ease-in-out infinite alternate;
-}
-
-@keyframes bgPulse {
-  0% { transform: scale(1) rotate(0deg); }
-  100% { transform: scale(1.1) rotate(3deg); }
+  display: none;
 }
 
 .login-card {
@@ -46,7 +28,6 @@ body {
   z-index: 1;
   width: 100%;
   max-width: 380px;
-  margin: 20px;
   padding: 40px 35px 35px;
   background: rgba(20, 20, 40, 0.85);
   backdrop-filter: blur(20px);
@@ -66,10 +47,11 @@ body {
 }
 
 .login-logo img {
-  width: 150px;
+  width: 160px;
   height: auto;
-  object-fit: contain;
-  mix-blend-mode: screen;
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.95);
 }
 
 .login-title {
@@ -340,4 +322,43 @@ button {
 /* PANEL WIDE */
 .panel {
   max-width: 500px;
+}
+
+/* ========================= */
+/* MOBILE                    */
+/* ========================= */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 30px 20px 25px;
+    border-radius: 16px;
+  }
+
+  .login-logo img {
+    width: 120px;
+  }
+
+  .login-title {
+    font-size: 22px;
+  }
+
+  .login-footer {
+    position: relative;
+    padding: 20px 15px;
+    color: rgba(255,255,255,0.25);
+  }
+
+  .panel {
+    max-width: 100%;
+    margin: 10px;
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  #visor {
+    height: 400px;
+  }
 }
