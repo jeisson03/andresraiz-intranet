@@ -716,7 +716,7 @@ async function generarCertificado() {
 // =========================
 // SOLICITUD VACACIONES
 // =========================
-const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCIy5n-27tWqTlXQiEjvOQD65_vzhbDgVnSMJ3ETrA9qTXz63Q3lwyoBVvKXoKuDxw/exec';
+const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqugfzGLO4vr6WO-20wrJvKyH2iZpF6b0BohqWC9Tw15xMP-mYrxlt0_yuU0ESCMP_/exec';
 const CLAVE_SECRETA = 'andresraiz2026';
 
 function abrirSolicitudVacaciones() {
@@ -803,15 +803,19 @@ async function enviarSolicitudVacaciones() {
 
   try {
     const url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=nueva_solicitud&cedula=' + encodeURIComponent(empleado.cedula) + '&nombre=' + encodeURIComponent(empleado.nombre) + '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) + '&fechaFin=' + encodeURIComponent(fechaFinFmt) + '&dias=' + dias + '&motivo=' + encodeURIComponent(motivo);
-    const res = await fetch(url);
-    const data = await res.json();
+    const res = await fetch(url, { redirect: 'follow' });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { data = { raw: text }; }
     if (data.success) {
       alert('Solicitud enviada exitosamente');
       cerrarModalVacaciones();
       cargarHistorialSolicitudes();
+    } else {
+      alert('Respuesta del servidor: ' + JSON.stringify(data));
     }
   } catch(e) {
-    alert('Error al enviar la solicitud');
+    alert('Error: ' + e.message);
   }
 }
 
