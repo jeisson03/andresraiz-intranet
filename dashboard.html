@@ -823,7 +823,7 @@ function contarDiasHabiles(inicio, fin) {
   var actual = new Date(inicio);
   while (actual <= fin) {
     var diaSemana = actual.getDay();
-    if (diaSemana !== 0 && diaSemana !== 6 && !esFestivoColombiano(actual)) {
+    if (diaSemana !== 0 && !esFestivoColombiano(actual)) {
       contador++;
     }
     actual.setDate(actual.getDate() + 1);
