@@ -125,7 +125,7 @@
         </div>
         <div class="vac-form-group">
           <label>Fecha de inicio</label>
-          <input type="date" id="vacFechaInicio" onchange="calcularDiasVacaciones()">
+          <input type="date" id="vacFechaInicio" onchange="calcularDiasVacaciones();var f=document.getElementById('vacFechaFin').value;document.getElementById('vacFechaFin').min=this.value;if(f&&f<this.value){document.getElementById('vacFechaFin').value='';}">
         </div>
         <div class="vac-form-group">
           <label>Fecha de fin</label>
@@ -847,7 +847,7 @@ function cargarHistorialSolicitudes() {
         return '<div class="vac-solicitud-item">' +
           '<div class="vac-solicitud-top">' +
             '<span class="vac-solicitud-fechas">' + (s['Fecha Inicio']||'') + ' - ' + (s['Fecha Fin']||'') + '</span>' +
-            '<span class="vac-solicitud-dias">' + (s.Dias||'') + ' dias</span>' +
+            '<span class="vac-solicitud-dias">' + (s['Días'] || s.Dias || '') + ' dias</span>' +
           '</div>' +
           '<div class="vac-solicitud-motivo">' + (s.Motivo||'') + '</div>' +
           '<div class="vac-solicitud-bottom">' +

@@ -155,7 +155,7 @@ async function cargarSolicitudesAdmin() {
             <div class="admin-solicitud-dates">
               <div><b>Inicio:</b> ${s['Fecha Inicio']}</div>
               <div><b>Fin:</b> ${s['Fecha Fin']}</div>
-              <div><b>Días:</b> ${s.Dias}</div>
+              <div><b>Días:</b> ${s['Días'] || s.Dias || ''}</div>
               <div><b>Solicitado:</b> ${s['Fecha Solicitud']}</div>
             </div>
             <div class="admin-solicitud-motivo">
