@@ -445,6 +445,462 @@ body {
   box-shadow: 0 6px 20px rgba(40,167,69,0.4);
 }
 
+.dash-btn-vacation {
+  background: linear-gradient(135deg, #6c5ce7, #5a4bd1);
+  color: white;
+  box-shadow: 0 4px 15px rgba(108,92,231,0.3);
+}
+
+.dash-btn-vacation:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(108,92,231,0.4);
+}
+
+/* ========================= */
+/* MODAL VACACIONES          */
+/* ========================= */
+.vac-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.vac-modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vac-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.vac-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.vac-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.vac-modal-close:hover {
+  color: #333;
+}
+
+.vac-modal-body {
+  padding: 20px;
+}
+
+.vac-disponibles-info {
+  display: flex;
+  justify-content: space-around;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.vac-disp-item {
+  text-align: center;
+}
+
+.vac-disp-num {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #6c5ce7;
+}
+
+.vac-disp-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.vac-form-group {
+  margin-bottom: 15px;
+}
+
+.vac-form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.vac-form-group input,
+.vac-form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.vac-form-group input:focus,
+.vac-form-group textarea:focus {
+  outline: none;
+  border-color: #6c5ce7;
+}
+
+.vac-form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.vac-dias-info {
+  background: #f0ebff;
+  color: #6c5ce7;
+  padding: 10px 15px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.vac-dias-num {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.vac-btn-submit {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6c5ce7, #5a4bd1);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(108,92,231,0.3);
+  transition: all 0.2s;
+}
+
+.vac-btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(108,92,231,0.4);
+}
+
+/* ========================= */
+/* HISTORIAL SOLICITUDES     */
+/* ========================= */
+.vac-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.vac-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.vac-card-icon {
+  color: #6c5ce7;
+}
+
+.vac-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.vac-empty {
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+  padding: 20px;
+}
+
+.vac-solicitud-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.vac-solicitud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.vac-solicitud-fechas {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.vac-solicitud-dias {
+  background: #6c5ce7;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vac-solicitud-motivo {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.vac-solicitud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vac-solicitud-fecha {
+  font-size: 11px;
+  color: #999;
+}
+
+.vac-solicitud-estado {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.vac-estado-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.vac-estado-aprobada {
+  background: #d4edda;
+  color: #155724;
+}
+
+.vac-estado-rechazada {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.vac-solicitud-obs {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+  color: #666;
+}
+
+/* ========================= */
+/* ADMIN                     */
+/* ========================= */
+.admin-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.admin-filters select {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  cursor: pointer;
+}
+
+.admin-filters .dash-btn-secondary {
+  width: auto;
+  padding: 12px 20px;
+}
+
+.admin-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.admin-stat-item {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.admin-stat-num {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: #6c5ce7;
+}
+
+.admin-stat-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.admin-solicitud-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.admin-solicitud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.admin-solicitud-name {
+  display: block;
+  font-weight: 700;
+  font-size: 16px;
+  color: #333;
+}
+
+.admin-solicitud-cedula {
+  display: block;
+  font-size: 12px;
+  color: #999;
+}
+
+.admin-solicitud-body {
+  margin-bottom: 12px;
+}
+
+.admin-solicitud-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.admin-solicitud-motivo {
+  font-size: 13px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.admin-acciones {
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.admin-obs-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.admin-obs-input:focus {
+  outline: none;
+  border-color: #6c5ce7;
+}
+
+.admin-btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-btn-approve,
+.admin-btn-reject {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-btn-approve {
+  background: #28a745;
+  color: white;
+}
+
+.admin-btn-approve:hover {
+  background: #218838;
+}
+
+.admin-btn-reject {
+  background: #dc3545;
+  color: white;
+}
+
+.admin-btn-reject:hover {
+  background: #c82333;
+}
+
+.admin-respuesta-info {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  gap: 15px;
+}
+
 /* VISOR */
 #visor {
   display: none;
@@ -484,5 +940,13 @@ body {
 
   #visor {
     height: 400px;
+  }
+
+  .admin-stats {
+    flex-direction: column;
+  }
+
+  .admin-solicitud-dates {
+    grid-template-columns: 1fr;
   }
 }

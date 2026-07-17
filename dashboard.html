@@ -85,6 +85,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/></svg>
       Generar certificado
     </button>
+    <button class="dash-btn dash-btn-vacation" onclick="abrirSolicitudVacaciones()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Solicitar vacaciones
+    </button>
     <button id="btnDescargar" class="dash-btn dash-btn-success" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Descargar certificado
@@ -92,6 +96,64 @@
   </div>
 
   <iframe id="visor"></iframe>
+
+  <!-- MODAL SOLICITUD VACACIONES -->
+  <div id="modalVacaciones" class="vac-modal" style="display:none;">
+    <div class="vac-modal-content">
+      <div class="vac-modal-header">
+        <h3>Solicitar Vacaciones</h3>
+        <button class="vac-modal-close" onclick="cerrarModalVacaciones()">&times;</button>
+      </div>
+      <div class="vac-modal-body">
+        <div class="vac-disponibles-info">
+          <div class="vac-disp-item">
+            <span class="vac-disp-num" id="vacDispDisponibles">0</span>
+            <span class="vac-disp-label">Disponibles</span>
+          </div>
+          <div class="vac-disp-item">
+            <span class="vac-disp-num" id="vacDispTomadas">0</span>
+            <span class="vac-disp-label">Tomados</span>
+          </div>
+          <div class="vac-disp-item">
+            <span class="vac-disp-num" id="vacDispAcumuladas">0</span>
+            <span class="vac-disp-label">Acumulados</span>
+          </div>
+        </div>
+        <div class="vac-form-group">
+          <label>Fecha de inicio</label>
+          <input type="date" id="vacFechaInicio" onchange="calcularDiasVacaciones()">
+        </div>
+        <div class="vac-form-group">
+          <label>Fecha de fin</label>
+          <input type="date" id="vacFechaFin" onchange="calcularDiasVacaciones()">
+        </div>
+        <div class="vac-dias-info" id="vacDiasInfo" style="display:none;">
+          <span id="vacDiasNum">0</span> días seleccionados
+        </div>
+        <div class="vac-form-group">
+          <label>Motivo</label>
+          <textarea id="vacMotivo" rows="3" placeholder="Describe el motivo de tu solicitud..."></textarea>
+        </div>
+        <button class="vac-btn-submit" onclick="enviarSolicitudVacaciones()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Enviar solicitud
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL SOLICITUDES -->
+  <div class="vac-card" id="historialSolicitudes">
+    <div class="vac-card-header">
+      <div class="vac-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <span class="vac-card-title">Mis solicitudes</span>
+    </div>
+    <div id="listaSolicitudes">
+      <p class="vac-empty">Cargando solicitudes...</p>
+    </div>
+  </div>
 
   <footer class="dash-footer">
     Andres Raiz Inmobiliaria S.A.S.
@@ -650,6 +712,163 @@ async function generarCertificado() {
     `;
   }
 }
+
+// =========================
+// SOLICITUD VACACIONES
+// =========================
+const VAC_SCRIPT_URL = '';
+
+function abrirSolicitudVacaciones() {
+  document.getElementById('modalVacaciones').style.display = 'flex';
+  cargarDisponiblesVacaciones();
+  document.getElementById('vacFechaInicio').value = '';
+  document.getElementById('vacFechaFin').value = '';
+  document.getElementById('vacMotivo').value = '';
+  document.getElementById('vacDiasInfo').style.display = 'none';
+}
+
+function cerrarModalVacaciones() {
+  document.getElementById('modalVacaciones').style.display = 'none';
+}
+
+async function cargarDisponiblesVacaciones() {
+  if (!VAC_SCRIPT_URL) {
+    const fechaIngreso = new Date(empleado.ingreso);
+    const hoy = new Date();
+    const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
+    const acumuladas = Math.floor((15 / 12) * meses);
+    const tomadas = parseInt(empleado.vacaciones || 0);
+    const disponibles = Math.max(acumuladas - tomadas, 0);
+    document.getElementById('vacDispDisponibles').innerText = disponibles;
+    document.getElementById('vacDispTomadas').innerText = tomadas;
+    document.getElementById('vacDispAcumuladas').innerText = acumuladas;
+    return;
+  }
+  try {
+    const res = await fetch(VAC_SCRIPT_URL + '?action=disponibles&cedula=' + empleado.cedula);
+    const data = await res.json();
+    document.getElementById('vacDispDisponibles').innerText = data.disponibles;
+    document.getElementById('vacDispTomadas').innerText = data.tomadas;
+    document.getElementById('vacDispAcumuladas').innerText = data.acumuladas;
+  } catch(e) {
+    abrirSolicitudVacaciones();
+  }
+}
+
+function calcularDiasVacaciones() {
+  const inicio = document.getElementById('vacFechaInicio').value;
+  const fin = document.getElementById('vacFechaFin').value;
+  if (inicio && fin) {
+    const dInicio = new Date(inicio);
+    const dFin = new Date(fin);
+    if (dFin >= dInicio) {
+      const dias = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
+      document.getElementById('vacDiasInfo').style.display = 'block';
+      document.getElementById('vacDiasNum').innerText = dias;
+    }
+  }
+}
+
+async function enviarSolicitudVacaciones() {
+  const fechaInicio = document.getElementById('vacFechaInicio').value;
+  const fechaFin = document.getElementById('vacFechaFin').value;
+  const motivo = document.getElementById('vacMotivo').value.trim();
+
+  if (!fechaInicio || !fechaFin) {
+    alert('Selecciona las fechas de inicio y fin');
+    return;
+  }
+  if (!motivo) {
+    alert('Escribe el motivo de tu solicitud');
+    return;
+  }
+
+  const dInicio = new Date(fechaInicio);
+  const dFin = new Date(fechaFin);
+  if (dFin < dInicio) {
+    alert('La fecha de fin no puede ser anterior a la de inicio');
+    return;
+  }
+
+  const dias = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
+  const fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
+  const fechaFinFmt = dFin.toLocaleDateString('es-CO');
+
+  if (!VAC_SCRIPT_URL) {
+    alert('Solicitud enviada (modo demo).\n\nPara conectar con el backend, configura la URL de Google Apps Script.');
+    cerrarModalVacaciones();
+    return;
+  }
+
+  try {
+    const res = await fetch(VAC_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cedula: empleado.cedula,
+        nombre: empleado.nombre,
+        fechaInicio: fechaInicioFmt,
+        fechaFin: fechaFinFmt,
+        dias: dias,
+        motivo: motivo
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Solicitud enviada exitosamente');
+      cerrarModalVacaciones();
+      cargarHistorialSolicitudes();
+    }
+  } catch(e) {
+    alert('Error al enviar la solicitud');
+  }
+}
+
+async function cargarHistorialSolicitudes() {
+  const container = document.getElementById('listaSolicitudes');
+
+  if (!VAC_SCRIPT_URL) {
+    container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch(VAC_SCRIPT_URL + '?action=solicitudes&cedula=' + empleado.cedula);
+    const data = await res.json();
+
+    if (data.data.length === 0) {
+      container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
+      return;
+    }
+
+    const solicitudes = data.data.reverse();
+    container.innerHTML = solicitudes.map(s => {
+      let estadoClass = 'vac-estado-pendiente';
+      let estadoIcono = '⏳';
+      if (s.Estado === 'Aprobada') { estadoClass = 'vac-estado-aprobada'; estadoIcono = '✅'; }
+      if (s.Estado === 'Rechazada') { estadoClass = 'vac-estado-rechazada'; estadoIcono = '❌'; }
+
+      return `
+        <div class="vac-solicitud-item">
+          <div class="vac-solicitud-top">
+            <span class="vac-solicitud-fechas">${s['Fecha Inicio']} - ${s['Fecha Fin']}</span>
+            <span class="vac-solicitud-dias">${s.Dias} días</span>
+          </div>
+          <div class="vac-solicitud-motivo">${s.Motivo}</div>
+          <div class="vac-solicitud-bottom">
+            <span class="vac-solicitud-fecha">Solicitado: ${s['Fecha Solicitud']}</span>
+            <span class="vac-solicitud-estado ${estadoClass}">${estadoIcono} ${s.Estado}</span>
+          </div>
+          ${s.Observaciones ? `<div class="vac-solicitud-obs"><b>Observaciones:</b> ${s.Observaciones}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<p class="vac-empty">Error al cargar solicitudes</p>';
+  }
+}
+
+cargarHistorialSolicitudes();
 </script>
 
 </body>

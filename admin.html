@@ -1,1 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Andrés Raíz</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dash-body">
 
+<div class="dash-container">
+  <div class="dash-header">
+    <div class="dash-header-top">
+      <img src="assets/logo.png" class="dash-logo">
+      <button class="dash-logout" onclick="cerrarSesion()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+    <h2 class="dash-greeting">Panel Admin</h2>
+    <p class="dash-sub">Gestión de solicitudes de vacaciones</p>
+  </div>
+
+  <div class="admin-filters">
+    <select id="filtroEstado" onchange="cargarSolicitudesAdmin()">
+      <option value="Pendiente">Pendientes</option>
+      <option value="Aprobada">Aprobadas</option>
+      <option value="Rechazada">Rechazadas</option>
+      <option value="Todas">Todas</option>
+    </select>
+    <button class="dash-btn dash-btn-secondary" onclick="cargarSolicitudesAdmin()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Actualizar
+    </button>
+  </div>
+
+  <div class="admin-stats">
+    <div class="admin-stat-item">
+      <span class="admin-stat-num" id="statPendientes">0</span>
+      <span class="admin-stat-label">Pendientes</span>
+    </div>
+    <div class="admin-stat-item">
+      <span class="admin-stat-num" id="statAprobadas">0</span>
+      <span class="admin-stat-label">Aprobadas</span>
+    </div>
+    <div class="admin-stat-item">
+      <span class="admin-stat-num" id="statRechazadas">0</span>
+      <span class="admin-stat-label">Rechazadas</span>
+    </div>
+  </div>
+
+  <div id="adminSolicitudes">
+    <p class="vac-empty">Cargando solicitudes...</p>
+  </div>
+
+  <footer class="dash-footer">
+    Andres Raiz Inmobiliaria S.A.S.
+  </footer>
+</div>
+
+<script>
+const ADMIN_SCRIPT_URL = '';
+let todasLasSolicitudes = [];
+
+function cerrarSesion() {
+  localStorage.removeItem('admin');
+  window.location.href = "index.html";
+}
+
+async function cargarSolicitudesAdmin() {
+  const container = document.getElementById('adminSolicitudes');
+  const filtro = document.getElementById('filtroEstado').value;
+
+  if (!ADMIN_SCRIPT_URL) {
+    container.innerHTML = '<p class="vac-empty">Configura la URL de Google Apps Script en admin.html para conectar con el backend</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch(ADMIN_SCRIPT_URL + '?action=solicitudes');
+    const data = await res.json();
+    todasLasSolicitudes = data.data;
+
+    const pendientes = todasLasSolicitudes.filter(s => s.Estado === 'Pendiente').length;
+    const aprobadas = todasLasSolicitudes.filter(s => s.Estado === 'Aprobada').length;
+    const rechazadas = todasLasSolicitudes.filter(s => s.Estado === 'Rechazada').length;
+
+    document.getElementById('statPendientes').innerText = pendientes;
+    document.getElementById('statAprobadas').innerText = aprobadas;
+    document.getElementById('statRechazadas').innerText = rechazadas;
+
+    let filtradas = todasLasSolicitudes;
+    if (filtro !== 'Todas') {
+      filtradas = todasLasSolicitudes.filter(s => s.Estado === filtro);
+    }
+    filtradas = filtradas.reverse();
+
+    if (filtradas.length === 0) {
+      container.innerHTML = '<p class="vac-empty">No hay solicitudes con este filtro</p>';
+      return;
+    }
+
+    container.innerHTML = filtradas.map(s => {
+      let estadoClass = 'vac-estado-pendiente';
+      let estadoIcono = '⏳';
+      if (s.Estado === 'Aprobada') { estadoClass = 'vac-estado-aprobada'; estadoIcono = '✅'; }
+      if (s.Estado === 'Rechazada') { estadoClass = 'vac-estado-rechazada'; estadoIcono = '❌'; }
+
+      const acciones = s.Estado === 'Pendiente' ? `
+        <div class="admin-acciones">
+          <input type="text" class="admin-obs-input" id="obs-${s.ID}" placeholder="Observaciones (opcional)">
+          <div class="admin-btn-group">
+            <button class="admin-btn-approve" onclick="responderSolicitud('${s.ID}', 'aprobar')">Aprobar</button>
+            <button class="admin-btn-reject" onclick="responderSolicitud('${s.ID}', 'rechazar')">Rechazar</button>
+          </div>
+        </div>
+      ` : `
+        <div class="admin-respuesta-info">
+          ${s['Aprobado Por'] ? `<span>Por: ${s['Aprobado Por']}</span>` : ''}
+          ${s.Observaciones ? `<span>Obs: ${s.Observaciones}</span>` : ''}
+        </div>
+      `;
+
+      return `
+        <div class="admin-solicitud-card">
+          <div class="admin-solicitud-header">
+            <div>
+              <span class="admin-solicitud-name">${s.Nombre}</span>
+              <span class="admin-solicitud-cedula">CC: ${s.Cedula}</span>
+            </div>
+            <span class="vac-solicitud-estado ${estadoClass}">${estadoIcono} ${s.Estado}</span>
+          </div>
+          <div class="admin-solicitud-body">
+            <div class="admin-solicitud-dates">
+              <div><b>Inicio:</b> ${s['Fecha Inicio']}</div>
+              <div><b>Fin:</b> ${s['Fecha Fin']}</div>
+              <div><b>Días:</b> ${s.Dias}</div>
+              <div><b>Solicitado:</b> ${s['Fecha Solicitud']}</div>
+            </div>
+            <div class="admin-solicitud-motivo">
+              <b>Motivo:</b> ${s.Motivo}
+            </div>
+          </div>
+          ${acciones}
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<p class="vac-empty">Error al cargar solicitudes</p>';
+  }
+}
+
+async function responderSolicitud(id, accion) {
+  const observaciones = document.getElementById('obs-' + id)?.value || '';
+  const nombreAdmin = 'Admin';
+
+  if (!ADMIN_SCRIPT_URL) {
+    alert('Modo demo: Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada'));
+    return;
+  }
+
+  try {
+    const res = await fetch(ADMIN_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: accion,
+        id: id,
+        aprobadoPor: nombreAdmin,
+        observaciones: observaciones
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');
+      cargarSolicitudesAdmin();
+    }
+  } catch(e) {
+    alert('Error al procesar la solicitud');
+  }
+}
+
+cargarSolicitudesAdmin();
+</script>
+
+</body>
+</html>
