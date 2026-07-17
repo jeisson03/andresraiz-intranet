@@ -157,3 +157,75 @@ function doGet(e) {
 
   return jsonResp({error: 'Accion no valida'});
 }
+
+function doPost(e) {
+  var params = e.parameter;
+
+  if (!params.clave || params.clave !== CLAVE_SECRETA) {
+    return ContentService.createTextOutput(JSON.stringify({error: 'Acceso denegado'})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var action = params.action;
+
+  if (action === 'nueva_solicitud') {
+    var sheet = ss.getSheetByName('solicitudes');
+    if (!sheet) {
+      sheet = ss.insertSheet('solicitudes');
+      sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+    }
+
+    var id = 'SOL-' + new Date().getTime();
+    var fechaSolicitud = Utilities.formatDate(new Date(), 'America/Bogota', 'dd/MM/yyyy');
+
+    sheet.appendRow([
+      id,
+      params.cedula || '',
+      params.nombre || '',
+      fechaSolicitud,
+      params.fechaInicio || '',
+      params.fechaFin || '',
+      params.dias || '',
+      params.motivo || '',
+      'Pendiente',
+      '',
+      ''
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({success: true, id: id})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === 'aprobar' || action === 'rechazar') {
+    var sheet = ss.getSheetByName('solicitudes');
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] == params.id) {
+        var estado = action === 'aprobar' ? 'Aprobada' : 'Rechazada';
+        sheet.getRange(i + 1, headers.indexOf('Estado') + 1).setValue(estado);
+        sheet.getRange(i + 1, headers.indexOf('Aprobado Por') + 1).setValue(params.aprobadoPor || '');
+        sheet.getRange(i + 1, headers.indexOf('Observaciones') + 1).setValue(params.observaciones || '');
+
+        if (action === 'aprobar') {
+          var empSheet = ss.getSheetByName('empleados');
+          var empData = empSheet.getDataRange().getValues();
+          var empHeaders = empData[0];
+          for (var j = 1; j < empData.length; j++) {
+            if (empData[j][empHeaders.indexOf('cedula')] == data[i][headers.indexOf('Cedula')]) {
+              var vacIdx = empHeaders.indexOf('vacaciones');
+              var actuales = parseInt(empData[j][vacIdx]) || 0;
+              empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + parseInt(data[i][headers.indexOf('Dias')]));
+              break;
+            }
+          }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({error: 'No encontrada'})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({error: 'Accion no valida'})).setMimeType(ContentService.MimeType.JSON);
+}

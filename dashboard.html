@@ -719,26 +719,6 @@ async function generarCertificado() {
 const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuIoP9HAARvqU6llb3l1OX1Ys75uteRmhokrsdSs9NKm1oBvR7MLkwyUn5HBI2eJBv/exec';
 const CLAVE_SECRETA = 'andresraiz2026';
 
-function jsonpFetch(url) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'jsonp_cb_' + Math.random().toString(36).substr(2);
-    const sep = url.includes('?') ? '&' : '?';
-    const script = document.createElement('script');
-    window[cbName] = function(data) {
-      delete window[cbName];
-      document.body.removeChild(script);
-      resolve(data);
-    };
-    script.src = url + sep + 'callback=' + cbName;
-    script.onerror = function() {
-      delete window[cbName];
-      document.body.removeChild(script);
-      reject(new Error('JSONP request failed'));
-    };
-    document.body.appendChild(script);
-  });
-}
-
 function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
   cargarDisponiblesVacaciones();
@@ -753,26 +733,15 @@ function cerrarModalVacaciones() {
 }
 
 async function cargarDisponiblesVacaciones() {
-  if (!VAC_SCRIPT_URL) {
-    const fechaIngreso = new Date(empleado.ingreso);
-    const hoy = new Date();
-    const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
-    const acumuladas = Math.floor((15 / 12) * meses);
-    const tomadas = parseInt(empleado.vacaciones || 0);
-    const disponibles = Math.max(acumuladas - tomadas, 0);
-    document.getElementById('vacDispDisponibles').innerText = disponibles;
-    document.getElementById('vacDispTomadas').innerText = tomadas;
-    document.getElementById('vacDispAcumuladas').innerText = acumuladas;
-    return;
-  }
-  try {
-    const data = await jsonpFetch(VAC_SCRIPT_URL + '?action=disponibles&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
-    document.getElementById('vacDispDisponibles').innerText = data.disponibles;
-    document.getElementById('vacDispTomadas').innerText = data.tomadas;
-    document.getElementById('vacDispAcumuladas').innerText = data.acumuladas;
-  } catch(e) {
-    abrirSolicitudVacaciones();
-  }
+  const fechaIngreso = new Date(empleado.ingreso);
+  const hoy = new Date();
+  const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
+  const acumuladas = Math.floor((15 / 12) * meses);
+  const tomadas = parseInt(empleado.vacaciones || 0);
+  const disponibles = Math.max(acumuladas - tomadas, 0);
+  document.getElementById('vacDispDisponibles').innerText = disponibles;
+  document.getElementById('vacDispTomadas').innerText = tomadas;
+  document.getElementById('vacDispAcumuladas').innerText = acumuladas;
 }
 
 function calcularDiasVacaciones() {
@@ -789,93 +758,125 @@ function calcularDiasVacaciones() {
   }
 }
 
-async function enviarSolicitudVacaciones() {
+function enviarSolicitudVacaciones() {
   const fechaInicio = document.getElementById('vacFechaInicio').value;
   const fechaFin = document.getElementById('vacFechaFin').value;
   const motivo = document.getElementById('vacMotivo').value.trim();
 
-  if (!fechaInicio || !fechaFin) {
-    alert('Selecciona las fechas de inicio y fin');
-    return;
-  }
-  if (!motivo) {
-    alert('Escribe el motivo de tu solicitud');
-    return;
-  }
+  if (!fechaInicio || !fechaFin) { alert('Selecciona las fechas de inicio y fin'); return; }
+  if (!motivo) { alert('Escribe el motivo de tu solicitud'); return; }
 
   const dInicio = new Date(fechaInicio);
   const dFin = new Date(fechaFin);
-  if (dFin < dInicio) {
-    alert('La fecha de fin no puede ser anterior a la de inicio');
-    return;
-  }
+  if (dFin < dInicio) { alert('La fecha de fin no puede ser anterior a la de inicio'); return; }
 
   const dias = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
   const fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
   const fechaFinFmt = dFin.toLocaleDateString('es-CO');
 
-  if (!VAC_SCRIPT_URL) {
-    alert('Solicitud enviada (modo demo).\n\nPara conectar con el backend, configura la URL de Google Apps Script.');
-    cerrarModalVacaciones();
-    return;
+  const iframeName = 'vac_post_' + Date.now();
+  const iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = VAC_SCRIPT_URL;
+  form.target = iframeName;
+  form enctype = 'text/plain';
+
+  const fields = {
+    clave: CLAVE_SECRETA,
+    action: 'nueva_solicitud',
+    cedula: empleado.cedula,
+    nombre: empleado.nombre,
+    fechaInicio: fechaInicioFmt,
+    fechaFin: fechaFinFmt,
+    dias: String(dias),
+    motivo: motivo
+  };
+
+  for (const [key, val] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = val;
+    form.appendChild(input);
   }
 
-  try {
-    const url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=nueva_solicitud&cedula=' + encodeURIComponent(empleado.cedula) + '&nombre=' + encodeURIComponent(empleado.nombre) + '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) + '&fechaFin=' + encodeURIComponent(fechaFinFmt) + '&dias=' + dias + '&motivo=' + encodeURIComponent(motivo);
-    const data = await jsonpFetch(url);
-    if (data.success) {
-      alert('Solicitud enviada exitosamente');
+  document.body.appendChild(form);
+
+  iframe.onload = function() {
+    setTimeout(function() {
+      try {
+        const text = iframe.contentDocument.body.innerText || '';
+        const data = JSON.parse(text);
+        if (data.success) {
+          alert('Solicitud enviada exitosamente');
+        } else {
+          alert('Solicitud enviada');
+        }
+      } catch(e) {
+        alert('Solicitud enviada');
+      }
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
       cerrarModalVacaciones();
       cargarHistorialSolicitudes();
-    } else {
-      alert('Respuesta del servidor: ' + JSON.stringify(data));
-    }
-  } catch(e) {
-    alert('Error: ' + e.message);
-  }
+    }, 2000);
+  };
+
+  form.submit();
 }
 
-async function cargarHistorialSolicitudes() {
+function cargarHistorialSolicitudes() {
   const container = document.getElementById('listaSolicitudes');
+  container.innerHTML = '<p class="vac-empty">Cargando...</p>';
 
-  if (!VAC_SCRIPT_URL) {
-    container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
-    return;
-  }
+  const params = new URLSearchParams({ clave: CLAVE_SECRETA, action: 'solicitudes', cedula: empleado.cedula });
+  const iframeName = 'vac_hist_' + Date.now();
+  const iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
 
-  try {
-    const data = await jsonpFetch(VAC_SCRIPT_URL + '?action=solicitudes&cedula=' + empleado.cedula + '&clave=' + CLAVE_SECRETA);
+  iframe.onload = function() {
+    setTimeout(function() {
+      try {
+        const text = iframe.contentDocument.body.innerText || '';
+        const data = JSON.parse(text);
+        if (!data.data || data.data.length === 0) {
+          container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
+        } else {
+          const solicitudes = data.data.slice().reverse();
+          container.innerHTML = solicitudes.map(function(s) {
+            var estadoClass = 'vac-estado-pendiente';
+            var estadoIcono = '\u23F3';
+            if (s.Estado === 'Aprobada') { estadoClass = 'vac-estado-aprobada'; estadoIcono = '\u2705'; }
+            if (s.Estado === 'Rechazada') { estadoClass = 'vac-estado-rechazada'; estadoIcono = '\u274C'; }
+            return '<div class="vac-solicitud-item">' +
+              '<div class="vac-solicitud-top">' +
+                '<span class="vac-solicitud-fechas">' + (s['Fecha Inicio']||'') + ' - ' + (s['Fecha Fin']||'') + '</span>' +
+                '<span class="vac-solicitud-dias">' + (s.Dias||'') + ' dias</span>' +
+              '</div>' +
+              '<div class="vac-solicitud-motivo">' + (s.Motivo||'') + '</div>' +
+              '<div class="vac-solicitud-bottom">' +
+                '<span class="vac-solicitud-fecha">Solicitado: ' + (s['Fecha Solicitud']||'') + '</span>' +
+                '<span class="vac-solicitud-estado ' + estadoClass + '">' + estadoIcono + ' ' + (s.Estado||'') + '</span>' +
+              '</div>' +
+              (s.Observaciones ? '<div class="vac-solicitud-obs"><b>Observaciones:</b> ' + s.Observaciones + '</div>' : '') +
+            '</div>';
+          }).join('');
+        }
+      } catch(e) {
+        container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
+      }
+      document.body.removeChild(iframe);
+    }, 3000);
+  };
 
-    if (data.data.length === 0) {
-      container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
-      return;
-    }
-
-    const solicitudes = data.data.reverse();
-    container.innerHTML = solicitudes.map(s => {
-      let estadoClass = 'vac-estado-pendiente';
-      let estadoIcono = '⏳';
-      if (s.Estado === 'Aprobada') { estadoClass = 'vac-estado-aprobada'; estadoIcono = '✅'; }
-      if (s.Estado === 'Rechazada') { estadoClass = 'vac-estado-rechazada'; estadoIcono = '❌'; }
-
-      return `
-        <div class="vac-solicitud-item">
-          <div class="vac-solicitud-top">
-            <span class="vac-solicitud-fechas">${s['Fecha Inicio']} - ${s['Fecha Fin']}</span>
-            <span class="vac-solicitud-dias">${s.Dias} días</span>
-          </div>
-          <div class="vac-solicitud-motivo">${s.Motivo}</div>
-          <div class="vac-solicitud-bottom">
-            <span class="vac-solicitud-fecha">Solicitado: ${s['Fecha Solicitud']}</span>
-            <span class="vac-solicitud-estado ${estadoClass}">${estadoIcono} ${s.Estado}</span>
-          </div>
-          ${s.Observaciones ? `<div class="vac-solicitud-obs"><b>Observaciones:</b> ${s.Observaciones}</div>` : ''}
-        </div>
-      `;
-    }).join('');
-  } catch(e) {
-    container.innerHTML = '<p class="vac-empty">Error al cargar solicitudes</p>';
-  }
+  iframe.src = VAC_SCRIPT_URL + '?' + params.toString();
 }
 
 cargarHistorialSolicitudes();
