@@ -802,19 +802,8 @@ async function enviarSolicitudVacaciones() {
   }
 
   try {
-    const res = await fetch(VAC_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clave: CLAVE_SECRETA,
-        cedula: empleado.cedula,
-        nombre: empleado.nombre,
-        fechaInicio: fechaInicioFmt,
-        fechaFin: fechaFinFmt,
-        dias: dias,
-        motivo: motivo
-      })
-    });
+    const url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=nueva_solicitud&cedula=' + encodeURIComponent(empleado.cedula) + '&nombre=' + encodeURIComponent(empleado.nombre) + '&fechaInicio=' + encodeURIComponent(fechaInicioFmt) + '&fechaFin=' + encodeURIComponent(fechaFinFmt) + '&dias=' + dias + '&motivo=' + encodeURIComponent(motivo);
+    const res = await fetch(url);
     const data = await res.json();
     if (data.success) {
       alert('Solicitud enviada exitosamente');

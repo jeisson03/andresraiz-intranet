@@ -162,17 +162,8 @@ async function responderSolicitud(id, accion) {
   }
 
   try {
-    const res = await fetch(ADMIN_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clave: CLAVE_SECRETA,
-        action: accion,
-        id: id,
-        aprobadoPor: nombreAdmin,
-        observaciones: observaciones
-      })
-    });
+    const url = ADMIN_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=' + accion + '&id=' + encodeURIComponent(id) + '&aprobadoPor=' + encodeURIComponent(nombreAdmin) + '&observaciones=' + encodeURIComponent(observaciones);
+    const res = await fetch(url);
     const data = await res.json();
     if (data.success) {
       alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');

@@ -73,6 +73,7 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({data: results})).setMimeType(ContentService.MimeType.JSON);
   }
 
+  // ==================== DISPONIBLES ====================
   if (action === 'disponibles') {
     var cedula = e.parameter.cedula;
     var sheet = ss.getSheetByName('empleados');
@@ -92,34 +93,49 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({disponibles: 0})).setMimeType(ContentService.MimeType.JSON);
   }
 
-  return ContentService.createTextOutput(JSON.stringify({error: 'Accion no valida'})).setMimeType(ContentService.MimeType.JSON);
-}
+  // ==================== NUEVA SOLICITUD ====================
+  if (action === 'nueva_solicitud') {
+    var sheet = ss.getSheetByName('solicitudes');
+    if (!sheet) {
+      sheet = ss.insertSheet('solicitudes');
+      sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
+    }
 
-function doPost(e) {
-  var body = JSON.parse(e.postData.contents);
+    var id = 'SOL-' + new Date().getTime();
+    var fechaSolicitud = Utilities.formatDate(new Date(), 'America/Bogota', 'dd/MM/yyyy');
 
-  if (!body.clave || body.clave !== CLAVE_SECRETA) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ error: "Acceso denegado" })
-    ).setMimeType(ContentService.MimeType.JSON);
+    sheet.appendRow([
+      id,
+      e.parameter.cedula || '',
+      e.parameter.nombre || '',
+      fechaSolicitud,
+      e.parameter.fechaInicio || '',
+      e.parameter.fechaFin || '',
+      e.parameter.dias || '',
+      e.parameter.motivo || '',
+      'Pendiente',
+      '',
+      ''
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({success: true, id: id})).setMimeType(ContentService.MimeType.JSON);
   }
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // ==================== APROBAR / RECHAZAR ====================
-  if (body.action === 'aprobar' || body.action === 'rechazar') {
+  // ==================== APROBAR ====================
+  if (action === 'aprobar' || action === 'rechazar') {
     var sheet = ss.getSheetByName('solicitudes');
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
+    var id = e.parameter.id;
 
     for (var i = 1; i < data.length; i++) {
-      if (data[i][0] == body.id) {
-        var estado = body.action === 'aprobar' ? 'Aprobada' : 'Rechazada';
+      if (data[i][0] == id) {
+        var estado = action === 'aprobar' ? 'Aprobada' : 'Rechazada';
         sheet.getRange(i + 1, headers.indexOf('Estado') + 1).setValue(estado);
-        sheet.getRange(i + 1, headers.indexOf('Aprobado Por') + 1).setValue(body.aprobadoPor || '');
-        sheet.getRange(i + 1, headers.indexOf('Observaciones') + 1).setValue(body.observaciones || '');
+        sheet.getRange(i + 1, headers.indexOf('Aprobado Por') + 1).setValue(e.parameter.aprobadoPor || '');
+        sheet.getRange(i + 1, headers.indexOf('Observaciones') + 1).setValue(e.parameter.observaciones || '');
 
-        if (body.action === 'aprobar') {
+        if (action === 'aprobar') {
           var empSheet = ss.getSheetByName('empleados');
           var empData = empSheet.getDataRange().getValues();
           var empHeaders = empData[0];
@@ -139,17 +155,5 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({error: 'No encontrada'})).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // ==================== NUEVA SOLICITUD ====================
-  var sheet = ss.getSheetByName('solicitudes');
-  if (!sheet) {
-    sheet = ss.insertSheet('solicitudes');
-    sheet.appendRow(['ID', 'Cedula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Dias', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
-  }
-
-  var id = 'SOL-' + new Date().getTime();
-  var fechaSolicitud = Utilities.formatDate(new Date(), 'America/Bogota', 'dd/MM/yyyy');
-
-  sheet.appendRow([id, body.cedula, body.nombre, fechaSolicitud, body.fechaInicio, body.fechaFin, body.dias, body.motivo, 'Pendiente', '', '']);
-
-  return ContentService.createTextOutput(JSON.stringify({success: true, id: id})).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({error: 'Accion no valida'})).setMimeType(ContentService.MimeType.JSON);
 }
