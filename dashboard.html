@@ -138,7 +138,7 @@
           <label>Motivo</label>
           <textarea id="vacMotivo" rows="3" placeholder="Describe el motivo de tu solicitud..."></textarea>
         </div>
-        <button class="vac-btn-submit" onclick="enviarSolicitudVacaciones()">
+        <button class="vac-btn-submit" id="btnEnviarSolicitud" onclick="enviarSolicitudVacaciones()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           Enviar solicitud
         </button>
@@ -729,6 +729,7 @@ const CLAVE_SECRETA = 'andresraiz2026';
 
 function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
+  resetBtnEnviar();
   cargarDisponiblesVacaciones();
   var hoy = new Date().toISOString().split('T')[0];
   document.getElementById('vacFechaInicio').value = '';
@@ -770,26 +771,22 @@ function calcularDiasVacaciones() {
   }
 }
 
-var enviandoSolicitud = false;
-
 function enviarSolicitudVacaciones() {
-  if (enviandoSolicitud) return;
+  var btn = document.getElementById('btnEnviarSolicitud');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = 'Enviando...';
 
   var fechaInicio = document.getElementById('vacFechaInicio').value;
   var fechaFin = document.getElementById('vacFechaFin').value;
   var motivo = document.getElementById('vacMotivo').value.trim();
 
-  if (!fechaInicio || !fechaFin) { alert('Selecciona las fechas de inicio y fin'); return; }
-  if (!motivo) { alert('Escribe el motivo de tu solicitud'); return; }
+  if (!fechaInicio || !fechaFin) { alert('Selecciona las fechas de inicio y fin'); resetBtnEnviar(); return; }
+  if (!motivo) { alert('Escribe el motivo de tu solicitud'); resetBtnEnviar(); return; }
 
   var dInicio = new Date(fechaInicio);
   var dFin = new Date(fechaFin);
-  if (dFin < dInicio) { alert('La fecha de fin no puede ser anterior a la de inicio'); return; }
-
-  enviandoSolicitud = true;
-  var btnEnviar = document.querySelector('.vac-btn-submit');
-  btnEnviar.disabled = true;
-  btnEnviar.innerText = 'Enviando...';
+  if (dFin < dInicio) { alert('La fecha de fin no puede ser anterior a la de inicio'); resetBtnEnviar(); return; }
 
   var dias = Math.ceil((dFin - dInicio) / (1000 * 60 * 60 * 24)) + 1;
   var fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
@@ -805,10 +802,7 @@ function enviarSolicitudVacaciones() {
     '&motivo=' + encodeURIComponent(motivo);
 
   jsonpFetch(url).then(function(data) {
-    enviandoSolicitud = false;
-    var btnEnviar = document.querySelector('.vac-btn-submit');
-    btnEnviar.disabled = false;
-    btnEnviar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar solicitud';
+    resetBtnEnviar();
     if (data.success) {
       alert('Solicitud enviada exitosamente');
     } else {
@@ -817,12 +811,15 @@ function enviarSolicitudVacaciones() {
     cerrarModalVacaciones();
     cargarHistorialSolicitudes();
   }).catch(function() {
-    enviandoSolicitud = false;
-    var btnEnviar = document.querySelector('.vac-btn-submit');
-    btnEnviar.disabled = false;
-    btnEnviar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar solicitud';
+    resetBtnEnviar();
     alert('Error al enviar la solicitud. Intente de nuevo.');
   });
+}
+
+function resetBtnEnviar() {
+  var btn = document.getElementById('btnEnviarSolicitud');
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar solicitud';
 }
 
 function jsonpFetch(url) {
