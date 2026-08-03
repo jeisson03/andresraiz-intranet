@@ -764,22 +764,8 @@ async function generarCertificado() {
 
   drawJustified(
     `Este certificado se expide a solicitud del interesado, para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`,
-    { extraY: 40 }
+    { extraY: 20 }
   );
-
-  // ============ FIRMA ============
-  const firmasX = left;
-  const firmaY = Math.max(y, 120);
-  const firmaWidth = 220;
-
-  page.drawText("__________________________", { x: firmasX, y: firmaY, size: 10, font, color: PDFLib.rgb(0.1, 0.1, 0.1) });
-  page.drawText("ANDRÉS RAÍZ", { x: firmasX + 30, y: firmaY + 14, size: 10, font: fontBold, color: PDFLib.rgb(0.1, 0.1, 0.1) });
-  page.drawText("Representante Legal", { x: firmasX + 30, y: firmaY - 8, size: 9, font, color: PDFLib.rgb(0.35, 0.35, 0.35) });
-
-  const firma2X = pageW - 85 - firmaWidth;
-  page.drawText("__________________________", { x: firma2X, y: firmaY, size: 10, font, color: PDFLib.rgb(0.1, 0.1, 0.1) });
-  page.drawText(`${nombre}`, { x: firma2X + 30, y: firmaY + 14, size: 10, font: fontBold, color: PDFLib.rgb(0.1, 0.1, 0.1) });
-  page.drawText("Empleado", { x: firma2X + 30, y: firmaY - 8, size: 9, font, color: PDFLib.rgb(0.35, 0.35, 0.35) });
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
