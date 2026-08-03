@@ -94,6 +94,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
       rodamiento: user.rodamiento || user["rodamiento "] || 0,
       comisiones: user.comisiones || user["comisiones "] || 0,
       vacaciones: user.vacaciones || user["vacaciones "] || 0,
+      genero: (user.genero || user["genero "] || '').toString().trim(),
       admin: admin
     };
 
