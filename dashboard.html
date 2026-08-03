@@ -675,47 +675,75 @@ async function generarCertificado() {
   const existingPdfBytes = await fetch("certificado_base.pdf").then(res => res.arrayBuffer());
   const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
+  const pageW = page.getWidth();
+  const pageH = page.getHeight();
 
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
+  const fontBold = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRomanBold);
 
-  const left = 75;
-  const maxWidth = 420;
-  const fontSize = 9.5;
-  const lineHeight = 16;
+  const left = 85;
+  const right = pageW - 85;
+  const maxWidth = right - left;
+  const fontSize = 10;
+  const lineHeight = 15.5;
 
-  let y = 675; // 🔥 equilibrio perfecto
+  let y = 660;
 
-  function drawParagraph(text, extraY = 10) {
+  function textWidth(t, f = font, s = fontSize) {
+    return f.widthOfTextAtSize(t, s);
+  }
+
+  function drawJustified(text, options = {}) {
+    const size = options.size || fontSize;
+    const f = options.bold ? fontBold : font;
     const words = text.split(" ");
     let line = "";
 
-    for (let word of words) {
-      const testLine = line + word + " ";
-      const width = font.widthOfTextAtSize(testLine, fontSize);
+    function flushLine(lineText, isLast) {
+      const trimmed = lineText.trim();
+      if (!trimmed) return;
+      const lineWidth = textWidth(trimmed, f, size);
+      let drawOpts = { x: left, y, size, font: f, color: PDFLib.rgb(0.1, 0.1, 0.1) };
 
-      if (width > maxWidth) {
-        page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-        y -= lineHeight;
-        line = word + " ";
+      if (options.center) {
+        drawOpts.x = left + (maxWidth - lineWidth) / 2;
+      } else if (options.right) {
+        drawOpts.x = right - lineWidth;
+      } else if (!isLast && trimmed.split(" ").length > 1) {
+        const spaceWidth = textWidth(" ", f, size);
+        const extra = (maxWidth - lineWidth) / (trimmed.split(" ").length - 1);
+        drawOpts.wordSpacing = Math.max(extra, 0);
+      }
+
+      page.drawText(trimmed, drawOpts);
+      y -= lineHeight;
+    }
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + " ";
+      if (textWidth(testLine.trim(), f, size) > maxWidth && line.trim()) {
+        flushLine(line, false);
+        line = words[i] + " ";
       } else {
         line = testLine;
       }
     }
+    if (line.trim()) flushLine(line, true);
 
-    if (line.trim()) {
-      page.drawText(line.trim(), { x: left, y, size: fontSize, font });
-      y -= lineHeight;
-    }
-
-    y -= extraY;
+    y -= (options.extraY || 10);
   }
 
-  drawParagraph(`Sabaneta, ${fechaActual}`, 25);
-  drawParagraph(`A QUIEN PUEDA INTERESAR`, 30);
+  // ============ ENCABEZADO ============
+  drawJustified(`Sabaneta, ${fechaActual}`, { right: true, extraY: 22 });
 
-  drawParagraph(
-    `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha bajo el cargo de ${cargo} mediante contrato a término indefinido.`,
-    20
+  drawJustified("CERTIFICADO LABORAL", { center: true, bold: true, size: 13, extraY: 16 });
+
+  drawJustified("A QUIEN PUEDA INTERESAR", { center: true, extraY: 24 });
+
+  // ============ CUERPO ============
+  drawJustified(
+    `ANDRÉS RAÍZ INMOBILIARIA S.A.S., con NIT 901524934, certifica que el señor(a) ${nombre}, identificado(a) con cédula de ciudadanía No. ${cedula}, labora en nuestra compañía desde el ${ingresoFecha} hasta la fecha, bajo el cargo de ${cargo}, mediante contrato a término indefinido.`,
+    { extraY: 20 }
   );
 
   let remuneracion =
@@ -732,12 +760,26 @@ async function generarCertificado() {
 
   remuneracion += ".";
 
-  drawParagraph(remuneracion, 20);
+  drawJustified(remuneracion, { extraY: 20 });
 
-  drawParagraph(
-    `Este certificado se expide a solicitud del interesado para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`,
-    40
+  drawJustified(
+    `Este certificado se expide a solicitud del interesado, para los fines que estime convenientes. Para cualquier información adicional, puede comunicarse al correo servicio@andresraiz.com o a los teléfonos 358 85 64 y 3245366761.`,
+    { extraY: 40 }
   );
+
+  // ============ FIRMA ============
+  const firmasX = left;
+  const firmaY = Math.max(y, 120);
+  const firmaWidth = 220;
+
+  page.drawText("__________________________", { x: firmasX, y: firmaY, size: 10, font, color: PDFLib.rgb(0.1, 0.1, 0.1) });
+  page.drawText("ANDRÉS RAÍZ", { x: firmasX + 30, y: firmaY + 14, size: 10, font: fontBold, color: PDFLib.rgb(0.1, 0.1, 0.1) });
+  page.drawText("Representante Legal", { x: firmasX + 30, y: firmaY - 8, size: 9, font, color: PDFLib.rgb(0.35, 0.35, 0.35) });
+
+  const firma2X = pageW - 85 - firmaWidth;
+  page.drawText("__________________________", { x: firma2X, y: firmaY, size: 10, font, color: PDFLib.rgb(0.1, 0.1, 0.1) });
+  page.drawText(`${nombre}`, { x: firma2X + 30, y: firmaY + 14, size: 10, font: fontBold, color: PDFLib.rgb(0.1, 0.1, 0.1) });
+  page.drawText("Empleado", { x: firma2X + 30, y: firmaY - 8, size: 9, font, color: PDFLib.rgb(0.35, 0.35, 0.35) });
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
