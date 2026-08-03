@@ -379,6 +379,18 @@ async function descargarColilla() {
             return '$' + n.toLocaleString('es-CO');
           }
 
+          function salarioDevengado() {
+            let val = colilla['Salario devengado'];
+            const bruto = (val || '').toString().trim();
+            if (bruto !== '' && bruto !== '-' && bruto !== '$') {
+              const parsed = parseInt(bruto.replace(/[^0-9\-]/g, '')) || 0;
+              if (parsed > 0) return parsed;
+            }
+            const basico = parseInt((colilla['Salario básico'] || '0').toString().replace(/[^0-9\-]/g, '')) || 0;
+            const dias = parseInt((colilla['Días liquidados'] || '0').toString().replace(/[^0-9]/g, '')) || 0;
+            return Math.round(basico / 30 * dias);
+          }
+
           const content = document.getElementById('colillaContent');
           content.innerHTML = \`
             <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
@@ -396,7 +408,7 @@ async function descargarColilla() {
             <div class="colilla-section">
               <h3>Devengados</h3>
               <table class="colilla-table">
-                <tr><td>Salario devengado</td><td style="text-align:right">\${fmt(colilla['Salario devengado'])}</td></tr>
+                <tr><td>Salario devengado</td><td style="text-align:right">\${fmt(salarioDevengado())}</td></tr>
                 <tr><td>Horas extras</td><td style="text-align:right">\${fmt(colilla['Horas extras'])}</td></tr>
                 <tr><td>Recargos nocturnos</td><td style="text-align:right">\${fmt(colilla['Recargos nocturnos'])}</td></tr>
                 <tr><td>% Comisiones salariales</td><td style="text-align:right">\${fmt(colilla['% Comisiones salariales'])}</td></tr>
@@ -532,6 +544,17 @@ async function generarPDFColilla(colilla, periodo) {
       return '$' + n.toLocaleString('es-CO');
     }
 
+    function salarioDevengadoColilla(colilla) {
+      const bruto = (colilla['Salario devengado'] || '').toString().trim();
+      if (bruto !== '' && bruto !== '-' && bruto !== '$') {
+        const parsed = parseInt(bruto.replace(/[^0-9\-]/g, '')) || 0;
+        if (parsed > 0) return parsed;
+      }
+      const basico = parseInt((colilla['Salario básico'] || '0').toString().replace(/[^0-9\-]/g, '')) || 0;
+      const dias = parseInt((colilla['Días liquidados'] || '0').toString().replace(/[^0-9]/g, '')) || 0;
+      return Math.round(basico / 30 * dias);
+    }
+
     y = drawSectionTitle('DATOS DEL EMPLEADO', y);
     y = drawRow('Nombre:', colilla['Nombre del empleado'] || '', y, false);
     y = drawRow('Cedula:', colilla['Cedula'] || '', y, false);
@@ -540,7 +563,7 @@ async function generarPDFColilla(colilla, periodo) {
     y -= 10;
 
     y = drawSectionTitle('DEVENGADOS', y);
-    y = drawRow('Salario devengado:', fmt(colilla['Salario devengado']), y, false);
+    y = drawRow('Salario devengado:', fmt(salarioDevengadoColilla(colilla)), y, false);
     y = drawRow('Horas extras:', fmt(colilla['Horas extras']), y, false);
     y = drawRow('Recargos nocturnos:', fmt(colilla['Recargos nocturnos']), y, false);
     y = drawRow('% Comisiones salariales:', fmt(colilla['% Comisiones salariales']), y, false);
