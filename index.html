@@ -61,7 +61,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   const clave = document.getElementById("clave").value.trim();
 
   try {
-    const res = await fetch(EMPLEADOS_CSV_URL);
+    const res = await fetch(EMPLEADOS_CSV_URL + "&_=" + Date.now());
     const text = await res.text();
     const data = parseCSV(text);
 
