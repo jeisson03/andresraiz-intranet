@@ -177,6 +177,8 @@ async function cargarSolicitudesAdmin() {
   try {
     const { rows } = await fetchSheetCSV('solicitudes');
     todasLasSolicitudes = rows;
+    solicitudesCalendario = rows;
+    renderCalendario();
 
     const pendientes = todasLasSolicitudes.filter(s => s.Estado === 'Pendiente').length;
     const aprobadas = todasLasSolicitudes.filter(s => s.Estado === 'Aprobada').length;
