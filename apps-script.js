@@ -1,6 +1,19 @@
 const CLAVE_SECRETA = "andresraiz2026";
 const HOJA_ID = "19AYAQ6KkliEv9drdqEx77AXReXRRwZFwszLpl8NbFgE";
 
+function norm(t) {
+  return (t || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function findSheetByName(ss, name) {
+  var sheets = ss.getSheets();
+  var target = norm(name);
+  for (var s = 0; s < sheets.length; s++) {
+    if (norm(sheets[s].getName()) === target) return sheets[s];
+  }
+  return null;
+}
+
 function doGet(e) {
   var callback = e.parameter.callback;
 
@@ -27,17 +40,16 @@ function doGet(e) {
   if (action === 'login') {
     var usuario = (e.parameter.usuario || '').toString().trim();
     var clave = (e.parameter.clave || '').toString().trim();
-    var empSheet = ss.getSheetByName('empleados');
+    var empSheet = findSheetByName(ss, 'empleados');
     if (!empSheet) return jsonResp({ error: 'Hoja de empleados no encontrada' });
 
     var empData = empSheet.getDataRange().getValues();
     var empHeaders = empData[0];
 
     function colIdx(name) {
-      var target = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      var target = norm(name);
       for (var c = 0; c < empHeaders.length; c++) {
-        var h = empHeaders[c].toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-        if (h === target) return c;
+        if (norm(empHeaders[c]) === target) return c;
       }
       return -1;
     }
@@ -96,7 +108,7 @@ function doGet(e) {
     var usuario = e.parameter.usuario;
     var periodo = e.parameter.periodo;
 
-    var sheet = ss.getSheetByName("colillas");
+    var sheet = findSheetByName(ss, 'colillas');
     if (!sheet) return jsonResp({ error: "Hoja no encontrada" });
 
     var data = sheet.getDataRange().getValues();
@@ -127,7 +139,7 @@ function doGet(e) {
   // ==================== SOLICITUDES ====================
   if (action === 'solicitudes') {
     var cedula = e.parameter.cedula;
-    var sheet = ss.getSheetByName('solicitudes');
+    var sheet = findSheetByName(ss, 'solicitudes');
     if (!sheet) return jsonResp({data: []});
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
@@ -159,7 +171,7 @@ function doGet(e) {
   // ==================== DISPONIBLES ====================
   if (action === 'disponibles') {
     var cedula = e.parameter.cedula;
-    var sheet = ss.getSheetByName('empleados');
+    var sheet = findSheetByName(ss, 'empleados');
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
     for (var i = 1; i < data.length; i++) {
@@ -170,7 +182,7 @@ function doGet(e) {
         var meses = (hoy.getFullYear() - ingreso.getFullYear()) * 12 + (hoy.getMonth() - ingreso.getMonth());
         var acumuladas = Math.floor((15 / 12) * meses);
         var colectivas = 0;
-        var vcSheet = ss.getSheetByName('vacaciones_colectivas');
+        var vcSheet = findSheetByName(ss, 'vacaciones_colectivas');
         if (vcSheet) {
           var vcData = vcSheet.getDataRange().getValues();
           var vcHeaders = vcData[0];
@@ -195,7 +207,7 @@ function doGet(e) {
 
   // ==================== VACACIONES COLECTIVAS ====================
   if (action === 'vacaciones_colectivas') {
-    var vcSheet = ss.getSheetByName('vacaciones_colectivas');
+    var vcSheet = findSheetByName(ss, 'vacaciones_colectivas');
     if (!vcSheet) return jsonResp({data: []});
     var vcData = vcSheet.getDataRange().getValues();
     var vcHeaders = vcData[0];
@@ -212,7 +224,7 @@ function doGet(e) {
 
   // ==================== APROBAR / RECHAZAR ====================
   if (action === 'aprobar' || action === 'rechazar') {
-    var sheet = ss.getSheetByName('solicitudes');
+    var sheet = findSheetByName(ss, 'solicitudes');
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
     var id = e.parameter.id;
@@ -225,7 +237,7 @@ function doGet(e) {
         sheet.getRange(i + 1, headers.indexOf('Observaciones') + 1).setValue(e.parameter.observaciones || '');
 
         if (action === 'aprobar') {
-          var empSheet = ss.getSheetByName('empleados');
+          var empSheet = findSheetByName(ss, 'empleados');
           var empData = empSheet.getDataRange().getValues();
           var empHeaders = empData[0];
           var cedulaColIdx = -1;
@@ -278,7 +290,7 @@ function doGet(e) {
 
   // ==================== NUEVA SOLICITUD (GET) ====================
   if (action === 'nueva_solicitud') {
-    var sheet = ss.getSheetByName('solicitudes');
+    var sheet = findSheetByName(ss, 'solicitudes');
     if (!sheet) {
       sheet = ss.insertSheet('solicitudes');
       sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
@@ -330,7 +342,7 @@ function doPost(e) {
   var action = params.action;
 
   if (action === 'nueva_solicitud') {
-    var sheet = ss.getSheetByName('solicitudes');
+    var sheet = findSheetByName(ss, 'solicitudes');
     if (!sheet) {
       sheet = ss.insertSheet('solicitudes');
       sheet.appendRow(['ID', 'Cédula', 'Nombre', 'Fecha Solicitud', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Motivo', 'Estado', 'Aprobado Por', 'Observaciones']);
@@ -357,7 +369,7 @@ function doPost(e) {
   }
 
   if (action === 'aprobar' || action === 'rechazar') {
-    var sheet = ss.getSheetByName('solicitudes');
+    var sheet = findSheetByName(ss, 'solicitudes');
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
 
@@ -369,7 +381,7 @@ function doPost(e) {
         sheet.getRange(i + 1, headers.indexOf('Observaciones') + 1).setValue(params.observaciones || '');
 
         if (action === 'aprobar') {
-          var empSheet = ss.getSheetByName('empleados');
+          var empSheet = findSheetByName(ss, 'empleados');
           var empData = empSheet.getDataRange().getValues();
           var empHeaders = empData[0];
           for (var j = 1; j < empData.length; j++) {
