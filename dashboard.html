@@ -798,13 +798,6 @@ async function generarCertificado() {
     a.download = `Certificado_${nombre}.pdf`;
     a.click();
   };
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Certificado_${nombre}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
   } catch (error) {
     const visor = document.getElementById('visor');
     visor.style.display = 'block';
