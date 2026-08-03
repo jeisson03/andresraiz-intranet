@@ -42,7 +42,7 @@
   </footer>
 
 <script>
-const URL_BACKEND = "https://backend-vercel-pi.vercel.app/api/empleados";
+const URL_BACKEND = "https://script.google.com/macros/s/AKfycbxP0G9yFjJG9hl2lXQ_3lU2nlWtZch2HPV4-AVqP8FTQi-GqIlQci41oUMOX3JUsEbi/exec";
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -61,16 +61,11 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   const clave = document.getElementById("clave").value.trim();
 
   try {
-    const res = await fetch(URL_BACKEND, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usuario, clave })
-    });
+    const url = URL_BACKEND + "?action=login&usuario=" + encodeURIComponent(usuario) + "&clave=" + encodeURIComponent(clave) + "&secret=andresraiz2026";
+    const data = await jsonpFetch(url);
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      errorEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' + (data.error || "Credenciales incorrectas");
+    if (data.error) {
+      errorEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' + (data.error === "Credenciales incorrectas" ? "Usuario o contraseña incorrectos" : data.error);
       errorEl.style.display = "flex";
       btn.disabled = false;
       btnText.style.display = "inline";
@@ -89,6 +84,26 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     btnSpinner.style.display = "none";
   }
 });
+
+function jsonpFetch(url) {
+  return new Promise(function(resolve, reject) {
+    var cbName = 'login_cb_' + Math.random().toString(36).substr(2);
+    var sep = url.includes('?') ? '&' : '?';
+    var script = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + sep + 'callback=' + cbName;
+    script.onerror = function() {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('JSONP request failed'));
+    };
+    document.body.appendChild(script);
+  });
+}
 </script>
 
 </body>

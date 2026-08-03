@@ -11,12 +11,84 @@ function doGet(e) {
     return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
   }
 
-  if (!e || !e.parameter || !e.parameter.clave || e.parameter.clave !== CLAVE_SECRETA) {
+  if (!e || !e.parameter) {
+    return jsonResp({ error: "Acceso denegado" });
+  }
+  var secretoRecibido = e.parameter.clave || e.parameter.secret;
+  if (!secretoRecibido || secretoRecibido !== CLAVE_SECRETA) {
     return jsonResp({ error: "Acceso denegado" });
   }
 
   var action = e.parameter.action;
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ==================== LOGIN ====================
+  if (action === 'login') {
+    var usuario = (e.parameter.usuario || '').toString().trim();
+    var clave = (e.parameter.clave || '').toString().trim();
+    var empSheet = ss.getSheetByName('empleados');
+    if (!empSheet) return jsonResp({ error: 'Hoja de empleados no encontrada' });
+
+    var empData = empSheet.getDataRange().getValues();
+    var empHeaders = empData[0];
+
+    function colIdx(name) {
+      var target = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      for (var c = 0; c < empHeaders.length; c++) {
+        var h = empHeaders[c].toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        if (h === target) return c;
+      }
+      return -1;
+    }
+
+    var uIdx = colIdx('usuario');
+    var cIdx = colIdx('clave');
+    if (uIdx < 0 || cIdx < 0) return jsonResp({ error: 'Credenciales incorrectas' });
+
+    for (var i = 1; i < empData.length; i++) {
+      var empUser = (empData[i][uIdx] || '').toString().trim();
+      var empClave = (empData[i][cIdx] || '').toString().trim();
+      if (empUser === usuario && empClave === clave) {
+        var nIdx = colIdx('nombre');
+        var cedIdx = colIdx('cedula');
+        var carIdx = colIdx('cargo');
+        var ingIdx = colIdx('ingreso');
+        var salIdx = colIdx('salario');
+        var traIdx = colIdx('transporte');
+        var rodIdx = colIdx('rodamiento');
+        var comIdx = colIdx('comisiones');
+        var vacIdx = colIdx('vacaciones');
+        var admIdx = colIdx('admin');
+
+        var ingreso = empData[i][ingIdx];
+        if (ingreso instanceof Date) {
+          ingreso = Utilities.formatDate(ingreso, 'America/Bogota', 'yyyy-MM-dd');
+        }
+
+        var admin = false;
+        if (admIdx >= 0) {
+          var admVal = (empData[i][admIdx] || '').toString().toUpperCase();
+          admin = admVal === 'TRUE' || admVal === 'VERDADERO' || admVal === 'SI' || admVal === '1' || admVal === 'X';
+        }
+
+        return jsonResp({
+          success: true,
+          usuario: empUser,
+          nombre: nIdx >= 0 ? empData[i][nIdx] : '',
+          cedula: cedIdx >= 0 ? empData[i][cedIdx] : '',
+          cargo: carIdx >= 0 ? empData[i][carIdx] : '',
+          ingreso: ingreso,
+          salario: salIdx >= 0 ? empData[i][salIdx] : 0,
+          transporte: traIdx >= 0 ? empData[i][traIdx] : 0,
+          rodamiento: rodIdx >= 0 ? empData[i][rodIdx] : 0,
+          comisiones: comIdx >= 0 ? empData[i][comIdx] : 0,
+          vacaciones: vacIdx >= 0 ? empData[i][vacIdx] : 0,
+          admin: admin
+        });
+      }
+    }
+    return jsonResp({ error: 'Credenciales incorrectas' });
+  }
 
   // ==================== COLILLAS ====================
   if (!action) {
