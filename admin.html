@@ -50,6 +50,20 @@
     </div>
   </div>
 
+  <div class="admin-calendar">
+    <div class="admin-calendar-header">
+      <button class="admin-cal-nav" onclick="cambiarMesCalendario(-1)">&#8249;</button>
+      <div class="admin-cal-title" id="calTitulo">Calendario de vacaciones</div>
+      <button class="admin-cal-nav" onclick="cambiarMesCalendario(1)">&#8250;</button>
+    </div>
+    <div class="admin-cal-sub" id="calSubtitulo"></div>
+    <div class="admin-cal-grid" id="calGrid"></div>
+    <div class="admin-cal-legend">
+      <span class="admin-cal-legend-item"><span class="admin-cal-dot admin-cal-dot-aprobada"></span> Aprobada</span>
+      <span class="admin-cal-legend-item"><span class="admin-cal-dot admin-cal-dot-pendiente"></span> Pendiente</span>
+    </div>
+  </div>
+
   <div id="adminSolicitudes">
     <p class="vac-empty">Cargando solicitudes...</p>
   </div>
@@ -286,8 +300,92 @@ async function leerEstadoSolicitud(id) {
     return null;
   }
 }
+var mesCalendario = new Date();
+var solicitudesCalendario = [];
+
+function parseFechaCal(str) {
+  str = (str || '').trim();
+  const m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  return new Date(str);
+}
+
+function diaCal(d) {
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+function cambiarMesCalendario(delta) {
+  mesCalendario.setDate(1);
+  mesCalendario.setMonth(mesCalendario.getMonth() + delta);
+  renderCalendario();
+}
+
+function renderCalendario() {
+  var anio = mesCalendario.getFullYear();
+  var mes = mesCalendario.getMonth();
+  var nombreMes = mesCalendario.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  document.getElementById('calTitulo').textContent = 'Calendario de vacaciones';
+  document.getElementById('calSubtitulo').textContent = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+
+  var primerDia = new Date(anio, mes, 1);
+  var offset = (primerDia.getDay() + 6) % 7; // lunes = 0
+  var diasEnMes = new Date(anio, mes + 1, 0).getDate();
+
+  var eventos = {};
+  solicitudesCalendario.forEach(function(s) {
+    var estado = s.Estado || '';
+    if (estado !== 'Aprobada' && estado !== 'Pendiente') return;
+    var inicio = parseFechaCal(s['Fecha Inicio'] || s['Fecha inicio']);
+    var fin = parseFechaCal(s['Fecha Fin'] || s['Fecha fin']);
+    if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return;
+    var nombre = (s.Nombre || '').toString().trim().split(' ')[0] || '';
+    for (var d = new Date(inicio); d <= fin; d.setDate(d.getDate() + 1)) {
+      if (d.getMonth() !== mes || d.getFullYear() !== anio) continue;
+      var key = diaCal(d);
+      if (!eventos[key]) eventos[key] = [];
+      eventos[key].push({ nombre: nombre, estado: estado });
+    }
+  });
+
+  var celdas = [];
+  var nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  for (var j = 0; j < 7; j++) celdas.push('<div class="admin-cal-dia admin-cal-dia-nombre">' + nombresDias[j] + '</div>');
+
+  var hoy = new Date();
+  var hoyKey = diaCal(hoy);
+
+  for (var k = 0; k < offset; k++) celdas.push('<div class="admin-cal-dia admin-cal-dia-vacio"></div>');
+
+  for (var dnum = 1; dnum <= diasEnMes; dnum++) {
+    var fecha = new Date(anio, mes, dnum);
+    var key = diaCal(fecha);
+    var evs = eventos[key] || [];
+    var esHoy = key === hoyKey;
+    var chips = evs.map(function(ev) {
+      return '<span class="admin-cal-chip admin-cal-chip-' + (ev.estado === 'Aprobada' ? 'aprobada' : 'pendiente') + '">' + ev.nombre + '</span>';
+    }).join('');
+    celdas.push(
+      '<div class="admin-cal-dia' + (esHoy ? ' admin-cal-dia-hoy' : '') + '">' +
+        '<span class="admin-cal-num">' + dnum + '</span>' +
+        (chips ? '<div class="admin-cal-chips">' + chips + '</div>' : '') +
+      '</div>'
+    );
+  }
+
+  document.getElementById('calGrid').innerHTML = celdas.join('');
+}
+
+async function cargarCalendario() {
+  try {
+    const { rows } = await fetchSheetCSV('solicitudes');
+    solicitudesCalendario = rows;
+    renderCalendario();
+  } catch(e) {}
+}
 
 cargarSolicitudesAdmin();
+cargarCalendario();
+
 </script>
 
 </body>

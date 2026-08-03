@@ -857,7 +857,7 @@ function cerrarModalVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'none';
 }
 
-function onSelectFechaInicio() {
+async function onSelectFechaInicio() {
   var inicio = document.getElementById('vacFechaInicio').value;
   if (!inicio) return;
   var dInicio = new Date(inicio);
@@ -868,7 +868,19 @@ function onSelectFechaInicio() {
     dInicio.setDate(dInicio.getDate() + diasHastaLunes);
     document.getElementById('vacFechaInicio').value = dInicio.toISOString().split('T')[0];
   }
-  document.getElementById('vacDiasInfo').style.display = 'block';
+  var aviso = document.getElementById('vacDiasInfo');
+  aviso.style.display = 'block';
+  aviso.className = 'vac-dias-info';
+  aviso.innerHTML = '<div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días — lunes a domingo</div>';
+
+  try {
+    const d = await calcularDisponibles();
+    if (d.disponibles < 7) {
+      aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fdeceb;color:#c0392b;font-size:13px;font-weight:600;">⚠️ Solo te quedan <b>' + d.disponibles + ' días</b> de vacaciones. La semana requiere 7. El admin puede aprobarla o rechazarla.</div>';
+    } else {
+      aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#e9f9ef;color:#1e7a45;font-size:13px;font-weight:600;">✔ Tienes <b>' + d.disponibles + ' días</b> disponibles.</div>';
+    }
+  } catch(e) {}
 }
 
 async function cargarDisponiblesVacaciones() {
