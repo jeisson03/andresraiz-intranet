@@ -945,25 +945,57 @@ function enviarSolicitudVacaciones() {
   msg.style.display = 'block';
   msg.className = 'vac-msg-envio vac-msg-info';
   msg.innerHTML = 'Enviando solicitud... esto puede tardar unos segundos. No cierres la ventana.';
-  setTimeout(function() {
-    if (btn.disabled) {
-      msg.innerHTML = 'Aún enviando... el servidor puede tardar hasta 1 minuto en procesar.';
-    }
-  }, 15000);
 
-  jsonpFetch(url).then(function(data) {
+  var confirmado = false;
+
+  function confirmarExito() {
+    if (confirmado) return;
+    confirmado = true;
     resetBtnEnviar();
     msg.className = 'vac-msg-envio vac-msg-success';
-    msg.innerHTML = data.success
-      ? 'Solicitud enviada exitosamente.'
-      : 'Solicitud recibida, pendiente de aprobación.';
+    msg.innerHTML = 'Solicitud enviada exitosamente.';
     setTimeout(cerrarModalVacaciones, 1800);
     cargarHistorialSolicitudes();
-  }).catch(function() {
+  }
+
+  function confirmarError() {
+    if (confirmado) return;
+    confirmado = true;
     resetBtnEnviar();
     msg.className = 'vac-msg-envio vac-msg-error';
-    msg.innerHTML = 'Error al enviar la solicitud. Revisa tu conexión e inténtalo de nuevo.';
+    msg.innerHTML = 'No se pudo confirmar el envío. Revisa tu conexión e inténtalo de nuevo.';
+  }
+
+  // La escritura se dispara con JSONP; si la respuesta se pierde, igual se guarda.
+  jsonpFetch(url).then(function(data) {
+    confirmarExito();
+  }).catch(function() {
+    // No confirmar error aún: el script pudo escribir aunque la respuesta se pierda
   });
+
+  // Confirmación por CSV: verificar que apareció una nueva solicitud
+  function contarMisSolicitudes() {
+    return fetchSheetCSV('solicitudes').then(function(res) {
+      var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
+      return res.rows.filter(function(s) {
+        return ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
+      }).length;
+    }).catch(function() { return -1; });
+  }
+
+  async function verificarEnvio() {
+    var antes = await contarMisSolicitudes();
+    var esperado = antes + 1;
+    for (var i = 0; i < 20; i++) {
+      await new Promise(function(r) { setTimeout(r, 4000); });
+      if (confirmado) return;
+      var ahora = await contarMisSolicitudes();
+      if (ahora >= esperado) { confirmarExito(); return; }
+      msg.innerHTML = 'Aún enviando... el servidor puede tardar hasta 1 minuto en procesar.';
+    }
+    confirmarError();
+  }
+  verificarEnvio();
 }
 
 function resetBtnEnviar() {

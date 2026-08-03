@@ -242,13 +242,49 @@ async function responderSolicitud(id, accion) {
   var container = document.getElementById('adminSolicitudes');
   container.innerHTML = '<div class="vac-empty" style="text-align:center;padding:30px;"><b>' + (accion === 'aprobar' ? 'Aprobando' : 'Rechazando') + ' solicitud...</b><br><span style="font-size:13px;color:#888;">Esto puede tardar hasta 1 minuto. No cierres la ventana.</span></div>';
 
-  jsonpFetch(url).then(function(data) {
+  var confirmado = false;
+  var estadoEsperado = accion === 'aprobar' ? 'Aprobada' : 'Rechazada';
+
+  function confirmarExito() {
+    if (confirmado) return;
+    confirmado = true;
     alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');
     cargarSolicitudesAdmin();
-  }).catch(function() {
-    alert('Solicitud procesada');
+  }
+
+  function confirmarError() {
+    if (confirmado) return;
+    confirmado = true;
+    alert('No se pudo confirmar la acción. Revisa tu conexión e inténtalo de nuevo.');
     cargarSolicitudesAdmin();
+  }
+
+  jsonpFetch(url).then(function(data) {
+    confirmarExito();
+  }).catch(function() {
+    // No confirmar error aún: el script pudo escribir aunque la respuesta se pierda
   });
+
+  async function verificarEstado() {
+    for (var i = 0; i < 20; i++) {
+      await new Promise(function(r) { setTimeout(r, 4000); });
+      if (confirmado) return;
+      var estado = await leerEstadoSolicitud(id);
+      if (estado === estadoEsperado) { confirmarExito(); return; }
+    }
+    confirmarError();
+  }
+  verificarEstado();
+}
+
+async function leerEstadoSolicitud(id) {
+  try {
+    const { rows } = await fetchSheetCSV('solicitudes');
+    const fila = rows.find(function(s) { return (s.ID || '') === id; });
+    return fila ? fila.Estado : null;
+  } catch(e) {
+    return null;
+  }
 }
 
 cargarSolicitudesAdmin();
