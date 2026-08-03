@@ -1,0 +1,8 @@
+# Archivos generados o confidenciales (no subir)
+colillas/
+certificados/
+*.pdf.pdf
+empleados.json
+
+# Copias locales de plantillas base
+certificado_base.pdf.pdf
