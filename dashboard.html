@@ -914,11 +914,15 @@ async function cargarVacacionesColectivas() {
   } catch(e) {}
 }
 
+var envioEnCurso = false;
+
 function enviarSolicitudVacaciones() {
   var btn = document.getElementById('btnEnviarSolicitud');
   var msg = document.getElementById('vacMsgEnvio');
   if (btn.disabled) return;
+  if (envioEnCurso) return;
   btn.disabled = true;
+  envioEnCurso = true;
   btn.innerHTML = 'Enviando...';
 
   var fechaInicio = document.getElementById('vacFechaInicio').value;
@@ -942,66 +946,95 @@ function enviarSolicitudVacaciones() {
     '&dias=7' +
     '&motivo=' + encodeURIComponent(motivo);
 
-  msg.style.display = 'block';
-  msg.className = 'vac-msg-envio vac-msg-info';
-  msg.innerHTML = 'Enviando solicitud... esto puede tardar unos segundos. No cierres la ventana.';
-
-  var confirmado = false;
-
-  function confirmarExito() {
-    if (confirmado) return;
-    confirmado = true;
-    resetBtnEnviar();
-    msg.className = 'vac-msg-envio vac-msg-success';
-    msg.innerHTML = 'Solicitud enviada exitosamente.';
-    setTimeout(cerrarModalVacaciones, 1800);
-    cargarHistorialSolicitudes();
-  }
-
-  function confirmarError() {
-    if (confirmado) return;
-    confirmado = true;
-    resetBtnEnviar();
-    msg.className = 'vac-msg-envio vac-msg-error';
-    msg.innerHTML = 'No se pudo confirmar el envío. Revisa tu conexión e inténtalo de nuevo.';
-  }
-
-  // La escritura se dispara con JSONP; si la respuesta se pierde, igual se guarda.
-  jsonpFetch(url).then(function(data) {
-    confirmarExito();
+  // Chequeo anti-duplicado: no crear otra solicitud pendiente para la misma semana
+  fetchSheetCSV('solicitudes').then(function(res) {
+    var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
+    var duplicado = res.rows.find(function(s) {
+      var mismaCed = ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
+      var mismoInicio = (s['Fecha Inicio'] || s['Fecha inicio'] || '').trim() === fechaInicioFmt;
+      return mismaCed && mismoInicio && (s.Estado || '') === 'Pendiente';
+    });
+    if (duplicado) {
+      envioEnCurso = false;
+      resetBtnEnviar();
+      msg.style.display = 'block';
+      msg.className = 'vac-msg-envio vac-msg-error';
+      msg.innerHTML = 'Ya tienes una solicitud pendiente para esa semana. Espera la aprobación.';
+      return;
+    }
+    realmenteEnviarSolicitud(url);
   }).catch(function() {
-    // No confirmar error aún: el script pudo escribir aunque la respuesta se pierda
+    realmenteEnviarSolicitud(url);
   });
 
-  // Confirmación por CSV: verificar que apareció una nueva solicitud
-  function contarMisSolicitudes() {
-    return fetchSheetCSV('solicitudes').then(function(res) {
-      var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
-      return res.rows.filter(function(s) {
-        return ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
-      }).length;
-    }).catch(function() { return -1; });
-  }
+  function realmenteEnviarSolicitud(enviarUrl) {
+    msg.style.display = 'block';
+    msg.className = 'vac-msg-envio vac-msg-info';
+    msg.innerHTML = 'Enviando solicitud... esto puede tardar unos segundos. No cierres la ventana.';
 
-  async function verificarEnvio() {
-    var antes = await contarMisSolicitudes();
-    var esperado = antes + 1;
-    for (var i = 0; i < 20; i++) {
-      await new Promise(function(r) { setTimeout(r, 4000); });
-      if (confirmado) return;
-      var ahora = await contarMisSolicitudes();
-      if (ahora >= esperado) { confirmarExito(); return; }
-      msg.innerHTML = 'Aún enviando... el servidor puede tardar hasta 1 minuto en procesar.';
+    var confirmado = false;
+
+    function finalizarEnvio() {
+      envioEnCurso = false;
     }
-    confirmarError();
+
+    function confirmarExito() {
+      if (confirmado) return;
+      confirmado = true;
+      finalizarEnvio();
+      resetBtnEnviar();
+      msg.className = 'vac-msg-envio vac-msg-success';
+      msg.innerHTML = 'Solicitud enviada exitosamente.';
+      setTimeout(cerrarModalVacaciones, 1800);
+      cargarHistorialSolicitudes();
+    }
+
+    function confirmarError() {
+      if (confirmado) return;
+      confirmado = true;
+      finalizarEnvio();
+      resetBtnEnviar();
+      msg.className = 'vac-msg-envio vac-msg-error';
+      msg.innerHTML = 'No se pudo confirmar el envío. Revisa tu conexión e inténtalo de nuevo.';
+    }
+
+    // La escritura se dispara con JSONP; si la respuesta se pierde, igual se guarda.
+    jsonpFetch(enviarUrl).then(function(data) {
+      confirmarExito();
+    }).catch(function() {
+      // No confirmar error aún: el script pudo escribir aunque la respuesta se pierda
+    });
+
+    // Confirmación por CSV: verificar que apareció una nueva solicitud
+    function contarMisSolicitudes() {
+      return fetchSheetCSV('solicitudes').then(function(res) {
+        var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
+        return res.rows.filter(function(s) {
+          return ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
+        }).length;
+      }).catch(function() { return -1; });
+    }
+
+    async function verificarEnvio() {
+      var antes = await contarMisSolicitudes();
+      var esperado = antes + 1;
+      for (var i = 0; i < 20; i++) {
+        await new Promise(function(r) { setTimeout(r, 4000); });
+        if (confirmado) return;
+        var ahora = await contarMisSolicitudes();
+        if (ahora >= esperado) { confirmarExito(); return; }
+        msg.innerHTML = 'Aún enviando... el servidor puede tardar hasta 1 minuto en procesar.';
+      }
+      confirmarError();
+    }
+    verificarEnvio();
   }
-  verificarEnvio();
 }
 
 function resetBtnEnviar() {
   var btn = document.getElementById('btnEnviarSolicitud');
-  btn.disabled = false;
   btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar solicitud';
+  if (!envioEnCurso) btn.disabled = false;
 }
 
 function jsonpFetch(url) {
