@@ -789,21 +789,6 @@ async function generarCertificado() {
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
 
-  const esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 800);
-
-  if (esMovil) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Certificado_${nombre}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } else {
-    document.getElementById('visor').style.display = 'block';
-    document.getElementById('visor').removeAttribute('srcdoc');
-    document.getElementById('visor').src = url;
-  }
-
   const boton = document.getElementById('btnDescargar');
   boton.style.display = 'block';
 
@@ -813,6 +798,13 @@ async function generarCertificado() {
     a.download = `Certificado_${nombre}.pdf`;
     a.click();
   };
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Certificado_${nombre}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   } catch (error) {
     const visor = document.getElementById('visor');
     visor.style.display = 'block';
