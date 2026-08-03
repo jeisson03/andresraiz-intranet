@@ -182,6 +182,36 @@ if (!empleado) window.location.href = "index.html";
 const VAC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP0G9yFjJG9hl2lXQ_3lU2nlWtZch2HPV4-AVqP8FTQi-GqIlQci41oUMOX3JUsEbi/exec';
 const CLAVE_SECRETA = 'andresraiz2026';
 
+function sheetCSVUrl(sheetName) {
+  return "https://docs.google.com/spreadsheets/d/19AYAQ6KkliEv9drdqEx77AXReXRRwZFwszLpl8NbFgE/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent(sheetName) + "&_=" + Date.now();
+}
+
+async function fetchSheetCSV(sheetName) {
+  const res = await fetch(sheetCSVUrl(sheetName));
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+async function calcularDisponibles() {
+  const fechaIngreso = parseFechaCO(empleado.ingreso);
+  const hoy = new Date();
+  const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
+  const acumuladas = Math.floor((15 / 12) * meses);
+  const tomadas = parseInt(empleado.vacaciones || 0);
+  let colectivas = 0;
+  try {
+    const { rows } = await fetchSheetCSV('vacaciones_colectivas');
+    for (const vc of rows) {
+      const inicio = parseFechaCO(vc['Fecha Inicio'] || vc['Fecha inicio'] || '');
+      const fin = parseFechaCO(vc['Fecha Fin'] || vc['Fecha fin'] || '');
+      const dias = parseInt(vc['Días'] || vc['Dias'] || 0) || 0;
+      if (inicio <= hoy && hoy <= fin) colectivas += dias;
+    }
+  } catch(e) {}
+  const disponibles = Math.max(acumuladas - tomadas - colectivas, 0);
+  return { disponibles, tomadas, acumuladas, colectivas };
+}
+
 // =========================
 // DATOS
 // =========================
@@ -217,17 +247,14 @@ document.getElementById('vacacionesDisponibles').innerText = disponiblesDash;
 const porcentajeDash = acumuladasDash > 0 ? (tomadasDash / acumuladasDash) * 100 : 0;
 document.getElementById("progreso").style.width = porcentajeDash + "%";
 
-(function() {
-  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=disponibles&cedula=' + encodeURIComponent(empleado.cedula);
-  jsonpFetch(url).then(function(data) {
-    if (data.disponibles !== undefined) {
-      document.getElementById('vacacionesDisponibles').innerText = data.disponibles;
-      document.getElementById('vacacionesTomadas').innerText = data.tomadas || tomadasDash;
-      var total = data.acumuladas || acumuladasDash;
-      var usados = data.tomadas || tomadasDash;
-      document.getElementById("progreso").style.width = (total > 0 ? (usados / total) * 100 : 0) + "%";
-    }
-  }).catch(function() {});
+(async function() {
+  try {
+    const d = await calcularDisponibles();
+    document.getElementById('vacacionesDisponibles').innerText = d.disponibles;
+    document.getElementById('vacacionesTomadas').innerText = d.tomadas || tomadasDash;
+    document.getElementById('vacDispColectivas').innerText = d.colectivas || 0;
+    document.getElementById("progreso").style.width = (d.acumuladas > 0 ? (d.tomadas / d.acumuladas) * 100 : 0) + "%";
+  } catch(e) {}
 })();
 
 if (empleado.admin === true || empleado.admin === 'TRUE' || empleado.admin === 'true' || empleado.admin === true) {
@@ -844,13 +871,12 @@ function onSelectFechaInicio() {
 }
 
 async function cargarDisponiblesVacaciones() {
-  const url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=disponibles&cedula=' + encodeURIComponent(empleado.cedula);
   try {
-    const data = await jsonpFetch(url);
-    document.getElementById('vacDispDisponibles').innerText = data.disponibles || 0;
-    document.getElementById('vacDispTomadas').innerText = data.tomadas || 0;
-    document.getElementById('vacDispAcumuladas').innerText = data.acumuladas || 0;
-    document.getElementById('vacDispColectivas').innerText = data.colectivas || 0;
+    const d = await calcularDisponibles();
+    document.getElementById('vacDispDisponibles').innerText = d.disponibles;
+    document.getElementById('vacDispTomadas').innerText = d.tomadas;
+    document.getElementById('vacDispAcumuladas').innerText = d.acumuladas;
+    document.getElementById('vacDispColectivas').innerText = d.colectivas;
   } catch(e) {
     const fechaIngreso = parseFechaCO(empleado.ingreso);
     const hoy = new Date();
@@ -865,13 +891,13 @@ async function cargarDisponiblesVacaciones() {
   }
 }
 
-function cargarVacacionesColectivas() {
-  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=vacaciones_colectivas';
-  jsonpFetch(url).then(function(data) {
-    if (!data.data || data.data.length === 0) return;
+async function cargarVacacionesColectivas() {
+  try {
+    const { rows } = await fetchSheetCSV('vacaciones_colectivas');
+    if (!rows || rows.length === 0) return;
     var hoy = new Date();
-    var proximas = data.data.filter(function(vc) {
-      var fin = new Date(vc['Fecha Fin'] || vc['Fecha fin'] || '');
+    var proximas = rows.filter(function(vc) {
+      var fin = parseFechaCO(vc['Fecha Fin'] || vc['Fecha fin'] || '');
       return fin >= hoy;
     });
     if (proximas.length === 0) return;
@@ -884,7 +910,7 @@ function cargarVacacionesColectivas() {
         '<div><b>' + inicio + ' — ' + fin + '</b><br><span style="font-size:12px;color:#888;">' + dias + ' días — aplica a todos los empleados</span></div>' +
         '</div>';
     }).join('');
-  }).catch(function() {});
+  } catch(e) {}
 }
 
 function enviarSolicitudVacaciones() {
@@ -955,17 +981,21 @@ function jsonpFetch(url) {
   });
 }
 
-function cargarHistorialSolicitudes() {
+async function cargarHistorialSolicitudes() {
   var container = document.getElementById('listaSolicitudes');
   container.innerHTML = '<p class="vac-empty">Cargando...</p>';
 
-  var url = VAC_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=solicitudes&cedula=' + encodeURIComponent(empleado.cedula);
+  try {
+    const { rows } = await fetchSheetCSV('solicitudes');
+    const cedulaLimpia = cleanCedula(empleado.cedula);
+    const misSolicitudes = rows.filter(function(s) {
+      return cleanCedula(s['Cédula'] || s.Cedula || s.cedula) === cedulaLimpia;
+    });
 
-  jsonpFetch(url).then(function(data) {
-    if (!data.data || data.data.length === 0) {
+    if (misSolicitudes.length === 0) {
       container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
     } else {
-      var solicitudes = data.data.slice().reverse();
+      var solicitudes = misSolicitudes.slice().reverse();
       container.innerHTML = solicitudes.map(function(s) {
         var estadoClass = 'vac-estado-pendiente';
         var estadoIcono = '\u23F3';
@@ -985,9 +1015,9 @@ function cargarHistorialSolicitudes() {
         '</div>';
       }).join('');
     }
-  }).catch(function() {
+  } catch(e) {
     container.innerHTML = '<p class="vac-empty">No hay solicitudes registradas</p>';
-  });
+  }
 }
 
 // Cargar historial al entrar al dashboard

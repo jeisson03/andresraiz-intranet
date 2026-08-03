@@ -63,6 +63,68 @@
 const ADMIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP0G9yFjJG9hl2lXQ_3lU2nlWtZch2HPV4-AVqP8FTQi-GqIlQci41oUMOX3JUsEbi/exec';
 const CLAVE_SECRETA = 'andresraiz2026';
 
+function sheetCSVUrl(sheetName) {
+  return "https://docs.google.com/spreadsheets/d/19AYAQ6KkliEv9drdqEx77AXReXRRwZFwszLpl8NbFgE/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent(sheetName) + "&_=" + Date.now();
+}
+
+async function fetchSheetCSV(sheetName) {
+  const res = await fetch(sheetCSVUrl(sheetName));
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const headers = [];
+  const rows = [];
+  let i = 0;
+  while (i < lines.length) {
+    let line = lines[i];
+    const fields = [];
+    while (line !== undefined) {
+      let field = '';
+      if (line.startsWith('"')) {
+        line = line.substring(1);
+        while (line.indexOf('"') !== -1) {
+          const idx = line.indexOf('"');
+          if (idx + 1 < line.length && line[idx + 1] === '"') {
+            field += line.substring(0, idx + 1);
+            line = line.substring(idx + 2);
+          } else {
+            field += line.substring(0, idx);
+            line = line.substring(idx + 2);
+            break;
+          }
+        }
+      } else {
+        const idx = line.indexOf(',');
+        if (idx === -1) {
+          field = line;
+          line = undefined;
+        } else {
+          field = line.substring(0, idx);
+          line = line.substring(idx + 1);
+        }
+      }
+      fields.push(field.trim());
+      if (line === '') line = undefined;
+    }
+    if (i === 0) {
+      headers.push(...fields);
+    } else {
+      const obj = {};
+      headers.forEach((h, j) => obj[h] = fields[j] || '');
+      rows.push(obj);
+    }
+    i++;
+  }
+  return { headers, rows };
+}
+
+function cleanCedula(str) {
+  return (str || '').toString().replace(/[^0-9]/g, '');
+}
+
 function jsonpFetch(url) {
   return new Promise((resolve, reject) => {
     const cbName = 'jsonp_cb_' + Math.random().toString(36).substr(2);
@@ -99,8 +161,8 @@ async function cargarSolicitudesAdmin() {
   }
 
   try {
-    const data = await jsonpFetch(ADMIN_SCRIPT_URL + '?action=solicitudes&clave=' + CLAVE_SECRETA);
-    todasLasSolicitudes = data.data;
+    const { rows } = await fetchSheetCSV('solicitudes');
+    todasLasSolicitudes = rows;
 
     const pendientes = todasLasSolicitudes.filter(s => s.Estado === 'Pendiente').length;
     const aprobadas = todasLasSolicitudes.filter(s => s.Estado === 'Aprobada').length;
@@ -147,7 +209,7 @@ async function cargarSolicitudesAdmin() {
           <div class="admin-solicitud-header">
             <div>
               <span class="admin-solicitud-name">${s.Nombre}</span>
-              <span class="admin-solicitud-cedula">CC: ${s.Cedula}</span>
+              <span class="admin-solicitud-cedula">CC: ${s['Cédula'] || s.Cedula || s.cedula}</span>
             </div>
             <span class="vac-solicitud-estado ${estadoClass}">${estadoIcono} ${s.Estado}</span>
           </div>
