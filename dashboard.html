@@ -1072,7 +1072,9 @@ function jsonpFetch(url) {
 
 async function cargarHistorialSolicitudes() {
   var container = document.getElementById('listaSolicitudes');
-  container.innerHTML = '<p class="vac-empty">Cargando...</p>';
+  if (container.children.length === 0) {
+    container.innerHTML = '<p class="vac-empty">Cargando...</p>';
+  }
 
   try {
     const { rows } = await fetchSheetCSV('solicitudes');
@@ -1112,6 +1114,48 @@ async function cargarHistorialSolicitudes() {
 // Cargar historial al entrar al dashboard
 cargarHistorialSolicitudes();
 cargarVacacionesColectivas();
+
+// =========================
+// ACTUALIZACIÓN AUTOMÁTICA
+// =========================
+var refrescoEnCurso = false;
+
+async function refrescarDatosDashboard() {
+  if (refrescoEnCurso) return;
+  refrescoEnCurso = true;
+  try {
+    const { rows } = await fetchSheetCSV('Hoja 1');
+    const keyUsuario = (empleado.usuario || '').toString().trim().toLowerCase();
+    const row = rows.find(function(r) {
+      return (r.usuario || '').toString().trim().toLowerCase() === keyUsuario;
+    });
+    if (row) {
+      var nuevoVac = (row.vacaciones || 0).toString().trim();
+      var actualVac = (empleado.vacaciones || 0).toString();
+      if (nuevoVac !== '' && nuevoVac !== actualVac) {
+        empleado.vacaciones = nuevoVac;
+        localStorage.setItem('empleado', JSON.stringify(empleado));
+      }
+    }
+  } catch(e) {}
+
+  try {
+    const d = await calcularDisponibles();
+    document.getElementById('vacacionesDisponibles').innerText = d.disponibles;
+    document.getElementById('vacacionesTomadas').innerText = d.tomadas;
+    document.getElementById('progreso').style.width = (d.acumuladas > 0 ? (d.tomadas / d.acumuladas) * 100 : 0) + "%";
+    document.getElementById('vacDispDisponibles').innerText = d.disponibles;
+    document.getElementById('vacDispTomadas').innerText = d.tomadas;
+    document.getElementById('vacDispAcumuladas').innerText = d.acumuladas;
+    document.getElementById('vacDispColectivas').innerText = d.colectivas || 0;
+  } catch(e) {}
+
+  cargarHistorialSolicitudes();
+  cargarVacacionesColectivas();
+  refrescoEnCurso = false;
+}
+
+setInterval(refrescarDatosDashboard, 30000);
 </script>
 
 </body>
