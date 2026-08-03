@@ -743,9 +743,15 @@ async function generarCertificado() {
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
 
-  document.getElementById('visor').style.display = 'block';
-  document.getElementById('visor').removeAttribute('srcdoc');
-  document.getElementById('visor').src = url;
+  const esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 800);
+
+  if (esMovil) {
+    window.open(url, '_blank');
+  } else {
+    document.getElementById('visor').style.display = 'block';
+    document.getElementById('visor').removeAttribute('srcdoc');
+    document.getElementById('visor').src = url;
+  }
 
   const boton = document.getElementById('btnDescargar');
   boton.style.display = 'block';
