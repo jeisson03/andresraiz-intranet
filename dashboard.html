@@ -746,11 +746,12 @@ async function generarCertificado() {
   const esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 800);
 
   if (esMovil) {
-    const reader = new FileReader();
-    reader.onload = function() {
-      window.open(reader.result, '_blank');
-    };
-    reader.readAsDataURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Certificado_${nombre}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   } else {
     document.getElementById('visor').style.display = 'block';
     document.getElementById('visor').removeAttribute('srcdoc');
