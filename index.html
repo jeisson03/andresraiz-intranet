@@ -61,7 +61,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   const clave = document.getElementById("clave").value.trim();
 
   try {
-    const url = URL_BACKEND + "?action=login&usuario=" + encodeURIComponent(usuario) + "&clave=" + encodeURIComponent(clave) + "&secret=andresraiz2026";
+    const url = URL_BACKEND + "?action=login&usuario=" + encodeURIComponent(usuario) + "&contrasena=" + encodeURIComponent(clave) + "&clave=andresraiz2026";
     const data = await jsonpFetch(url);
 
     if (data.error) {

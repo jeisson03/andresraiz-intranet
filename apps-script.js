@@ -58,7 +58,7 @@ function doGet(e) {
   // ==================== LOGIN ====================
   if (action === 'login') {
     var usuario = (e.parameter.usuario || '').toString().trim();
-    var clave = (e.parameter.clave || '').toString().trim();
+    var clave = (e.parameter.contrasena || e.parameter.password || '').toString().trim();
     var empSheet = findSheetByName(ss, 'empleados');
           if (!empSheet) empSheet = findSheetByHeaders(ss, ['cedula', 'vacaciones']);
     if (!empSheet) empSheet = findSheetByHeaders(ss, ['usuario', 'clave']);
