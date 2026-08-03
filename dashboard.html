@@ -193,7 +193,14 @@ document.getElementById('nombre').innerText = empleado.nombre;
 document.getElementById('cedula').innerText = empleado.cedula;
 document.getElementById('cargo').innerText = empleado.cargo;
 
-const fecha = new Date(empleado.ingreso);
+function parseFechaCO(str) {
+  str = (str || '').trim();
+  const m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  return new Date(str);
+}
+
+const fecha = parseFechaCO(empleado.ingreso);
 document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO', {
   year: 'numeric', month: 'long', day: 'numeric'
 });
@@ -673,7 +680,7 @@ async function generarCertificado() {
     year: 'numeric', month: 'long', day: 'numeric'
   });
 
-  const ingresoFecha = new Date(ingreso).toLocaleDateString("es-CO", {
+  const ingresoFecha = parseFechaCO(ingreso).toLocaleDateString("es-CO", {
     year: 'numeric', month: 'long', day: 'numeric'
   });
 
@@ -862,7 +869,7 @@ async function cargarDisponiblesVacaciones() {
     document.getElementById('vacDispAcumuladas').innerText = data.acumuladas || 0;
     document.getElementById('vacDispColectivas').innerText = data.colectivas || 0;
   } catch(e) {
-    const fechaIngreso = new Date(empleado.ingreso);
+    const fechaIngreso = parseFechaCO(empleado.ingreso);
     const hoy = new Date();
     const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
     const acumuladas = Math.floor((15 / 12) * meses);
