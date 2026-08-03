@@ -632,6 +632,33 @@ body {
   box-shadow: 0 6px 20px rgba(108,92,231,0.4);
 }
 
+.vac-msg-envio {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.vac-msg-info {
+  background: #f0f4ff;
+  color: #3a4fbd;
+  border: 1px solid #d3ddfa;
+}
+
+.vac-msg-success {
+  background: #e9f9ef;
+  color: #1e7a45;
+  border: 1px solid #bfe8cf;
+}
+
+.vac-msg-error {
+  background: #fdeceb;
+  color: #c0392b;
+  border: 1px solid #f5c6c3;
+}
+
 /* ========================= */
 /* HISTORIAL SOLICITUDES     */
 /* ========================= */

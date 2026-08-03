@@ -148,6 +148,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           Enviar solicitud
         </button>
+        <div class="vac-msg-envio" id="vacMsgEnvio" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -915,6 +916,7 @@ async function cargarVacacionesColectivas() {
 
 function enviarSolicitudVacaciones() {
   var btn = document.getElementById('btnEnviarSolicitud');
+  var msg = document.getElementById('vacMsgEnvio');
   if (btn.disabled) return;
   btn.disabled = true;
   btn.innerHTML = 'Enviando...';
@@ -940,18 +942,27 @@ function enviarSolicitudVacaciones() {
     '&dias=7' +
     '&motivo=' + encodeURIComponent(motivo);
 
+  msg.style.display = 'block';
+  msg.className = 'vac-msg-envio vac-msg-info';
+  msg.innerHTML = 'Enviando solicitud... esto puede tardar unos segundos. No cierres la ventana.';
+  setTimeout(function() {
+    if (btn.disabled) {
+      msg.innerHTML = 'Aún enviando... el servidor puede tardar hasta 1 minuto en procesar.';
+    }
+  }, 15000);
+
   jsonpFetch(url).then(function(data) {
     resetBtnEnviar();
-    if (data.success) {
-      alert('Solicitud enviada exitosamente');
-    } else {
-      alert('Solicitud enviada');
-    }
-    cerrarModalVacaciones();
+    msg.className = 'vac-msg-envio vac-msg-success';
+    msg.innerHTML = data.success
+      ? 'Solicitud enviada exitosamente.'
+      : 'Solicitud recibida, pendiente de aprobación.';
+    setTimeout(cerrarModalVacaciones, 1800);
     cargarHistorialSolicitudes();
   }).catch(function() {
     resetBtnEnviar();
-    alert('Error al enviar la solicitud. Intente de nuevo.');
+    msg.className = 'vac-msg-envio vac-msg-error';
+    msg.innerHTML = 'Error al enviar la solicitud. Revisa tu conexión e inténtalo de nuevo.';
   });
 }
 

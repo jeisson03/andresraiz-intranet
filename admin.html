@@ -239,7 +239,9 @@ async function responderSolicitud(id, accion) {
 
   var url = ADMIN_SCRIPT_URL + '?clave=' + CLAVE_SECRETA + '&action=' + accion + '&id=' + encodeURIComponent(id) + '&aprobadoPor=' + encodeURIComponent(nombreAdmin) + '&observaciones=' + encodeURIComponent(observaciones);
 
-  alert('Procesando solicitud...');
+  var container = document.getElementById('adminSolicitudes');
+  container.innerHTML = '<div class="vac-empty" style="text-align:center;padding:30px;"><b>' + (accion === 'aprobar' ? 'Aprobando' : 'Rechazando') + ' solicitud...</b><br><span style="font-size:13px;color:#888;">Esto puede tardar hasta 1 minuto. No cierres la ventana.</span></div>';
+
   jsonpFetch(url).then(function(data) {
     alert('Solicitud ' + (accion === 'aprobar' ? 'aprobada' : 'rechazada') + ' exitosamente');
     cargarSolicitudesAdmin();
