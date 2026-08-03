@@ -521,19 +521,48 @@ async function generarPDFColilla(colilla, periodo) {
     const lightGray = PDFLib.rgb(240/255, 240/255, 240/255);
     const white = PDFLib.rgb(1, 1, 1);
 
-    let logoImg;
+    let logoImg, logoW = 0, logoH = 0;
     try {
       const logoRes = await fetch('assets/logo.png');
       const logoBytes = await logoRes.arrayBuffer();
-      logoImg = await pdfDoc.embedPng(logoBytes);
+      const logoBmp = await createImageBitmap(new Blob([logoBytes], { type: 'image/png' }));
+      const canvas = document.createElement('canvas');
+      canvas.width = logoBmp.width;
+      canvas.height = logoBmp.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(logoBmp, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+      for (let yy = 0; yy < canvas.height; yy++) {
+        for (let xx = 0; xx < canvas.width; xx++) {
+          if (d[(yy * canvas.width + xx) * 4 + 3] < 80) continue;
+          if (xx < minX) minX = xx;
+          if (xx > maxX) maxX = xx;
+          if (yy < minY) minY = yy;
+          if (yy > maxY) maxY = yy;
+        }
+      }
+      if (maxX > minX && maxY > minY) {
+        const cw = maxX - minX + 1, ch = maxY - minY + 1;
+        const c2 = document.createElement('canvas');
+        c2.width = cw;
+        c2.height = ch;
+        const ctx2 = c2.getContext('2d');
+        ctx2.fillStyle = '#f06c00';
+        ctx2.fillRect(0, 0, cw, ch);
+        ctx2.drawImage(canvas, minX, minY, cw, ch, 0, 0, cw, ch);
+        const croppedBlob = await new Promise(function(res) { c2.toBlob(res, 'image/png'); });
+        logoImg = await pdfDoc.embedPng(await croppedBlob.arrayBuffer());
+        logoW = 130;
+        logoH = (ch / cw) * logoW;
+      }
     } catch(e) {}
 
     let y = 740;
 
     if (logoImg) {
-      const logoW = 120;
-      const logoH = (logoImg.height / logoImg.width) * logoW;
-      page.drawImage(logoImg, { x: 256, y: y - logoH, width: logoW, height: logoH });
+      page.drawImage(logoImg, { x: page.getWidth() / 2 - logoW / 2, y: y - logoH, width: logoW, height: logoH });
       y -= logoH + 10;
     }
 
@@ -627,10 +656,11 @@ async function generarPDFColilla(colilla, periodo) {
       y: y - 2, size: 13, font: fontBold, color: white
     });
 
-  pdfDoc.setTitle(`Certificado Laboral - ${nombre}`);
+  const nombreColilla = colilla['Nombre del empleado'] || 'empleado';
+  pdfDoc.setTitle(`Colilla de Pago - ${nombreColilla}`);
   pdfDoc.setAuthor("Andrés Raíz Inmobiliaria S.A.S.");
-  pdfDoc.setSubject("Certificado laboral");
-  pdfDoc.setKeywords(["certificado", "laboral", "empleado"]);
+  pdfDoc.setSubject("Colilla de pago");
+  pdfDoc.setKeywords(["colilla", "pago", "empleado"]);
 
   const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -638,7 +668,9 @@ async function generarPDFColilla(colilla, periodo) {
     const a = document.createElement('a');
     a.href = url;
     a.download = `Colilla_${(periodo || 'pago').replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   } catch (error) {
     alert('Error al generar el PDF: ' + error.message);
