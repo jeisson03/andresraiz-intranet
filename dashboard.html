@@ -407,8 +407,17 @@ async function descargarColilla() {
           if (!colilla) return;
 
           function fmt(val) {
-            const n = parseInt((val || '0').toString().replace(/[^0-9\-]/g, '')) || 0;
-            return '$' + n.toLocaleString('es-CO');
+            var str = (val || '').toString().trim();
+            if (str === '' || str === '-' || str === '$' || str === '$-') return '$0';
+            if (str.charAt(0) === '$') {
+              var n = parseFloat(str.replace(/[^0-9.]/g, ''));
+              if (isNaN(n)) return '$0';
+              if (n % 1 === 0) return '$' + n.toLocaleString('es-CO');
+              var parts = n.toFixed(2).split('.');
+              return '$' + parseInt(parts[0], 10).toLocaleString('es-CO') + '.' + parts[1];
+            }
+            var m = parseInt(str.replace(/[^0-9]/g, '')) || 0;
+            return '$' + m.toLocaleString('es-CO');
           }
 
           function salarioDevengado() {
@@ -601,8 +610,17 @@ async function generarPDFColilla(colilla, periodo) {
     }
 
     function fmt(val) {
-      const n = parseInt((val || '0').toString().replace(/[^0-9\-]/g, '')) || 0;
-      return '$' + n.toLocaleString('es-CO');
+      var str = (val || '').toString().trim();
+      if (str === '' || str === '-' || str === '$' || str === '$-') return '$0';
+      if (str.charAt(0) === '$') {
+        var n = parseFloat(str.replace(/[^0-9.]/g, ''));
+        if (isNaN(n)) return '$0';
+        if (n % 1 === 0) return '$' + n.toLocaleString('es-CO');
+        var parts = n.toFixed(2).split('.');
+        return '$' + parseInt(parts[0], 10).toLocaleString('es-CO') + '.' + parts[1];
+      }
+      var m = parseInt(str.replace(/[^0-9]/g, '')) || 0;
+      return '$' + m.toLocaleString('es-CO');
     }
 
     function salarioDevengadoColilla(colilla) {
