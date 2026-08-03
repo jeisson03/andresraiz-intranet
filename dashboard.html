@@ -595,7 +595,12 @@ async function generarPDFColilla(colilla, periodo) {
       y: y - 2, size: 13, font: fontBold, color: white
     });
 
-    const pdfBytes = await pdfDoc.save();
+  pdfDoc.setTitle(`Certificado Laboral - ${nombre}`);
+  pdfDoc.setAuthor("Andrés Raíz Inmobiliaria S.A.S.");
+  pdfDoc.setSubject("Certificado laboral");
+  pdfDoc.setKeywords(["certificado", "laboral", "empleado"]);
+
+  const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
