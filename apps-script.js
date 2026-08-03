@@ -1,4 +1,5 @@
 const CLAVE_SECRETA = "andresraiz2026";
+const HOJA_ID = "19AYAQ6KkliEv9drdqEx77AXReXRRwZFwszLpl8NbFgE";
 
 function doGet(e) {
   var callback = e.parameter.callback;
@@ -20,7 +21,7 @@ function doGet(e) {
   }
 
   var action = e.parameter.action;
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(HOJA_ID);
 
   // ==================== LOGIN ====================
   if (action === 'login') {
@@ -325,7 +326,7 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({error: 'Acceso denegado'})).setMimeType(ContentService.MimeType.JSON);
   }
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(HOJA_ID);
   var action = params.action;
 
   if (action === 'nueva_solicitud') {
