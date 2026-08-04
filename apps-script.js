@@ -309,14 +309,7 @@ function doGet(e) {
                     }
                   }
                 }
-                var actuales = parseInt(empData[j][vacIdx]) || 0;
-                var diasVal = 0;
-                var diasKeys = ['Días', 'Dias'];
-                for (var dk = 0; dk < diasKeys.length; dk++) {
-                  var idx = headers.indexOf(diasKeys[dk]);
-                  if (idx >= 0 && data[i][idx]) { diasVal = parseInt(data[i][idx]) || 0; break; }
-                }
-                empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + diasVal);
+                empSheet.getRange(j + 1, vacIdx + 1).setValue(1);
                 break;
               }
             }
@@ -432,14 +425,7 @@ function doPost(e) {
           for (var j = 1; j < empData.length; j++) {
             if (empData[j][empHeaders.indexOf('cedula')] == data[i][headers.indexOf('Cedula')]) {
               var vacIdx = empHeaders.indexOf('vacaciones');
-              var actuales = parseInt(empData[j][vacIdx]) || 0;
-              var diasVal2 = 0;
-              var diasKeys2 = ['Días', 'Dias'];
-              for (var dk2 = 0; dk2 < diasKeys2.length; dk2++) {
-                var idx2 = headers.indexOf(diasKeys2[dk2]);
-                if (idx2 >= 0 && data[i][idx2]) { diasVal2 = parseInt(data[i][idx2]) || 0; break; }
-              }
-              empSheet.getRange(j + 1, vacIdx + 1).setValue(actuales + diasVal2);
+              empSheet.getRange(j + 1, vacIdx + 1).setValue(1);
               break;
             }
           }

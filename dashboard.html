@@ -67,11 +67,11 @@
     <div class="dash-vac-info">
       <div class="dash-vac-stat">
         <span class="dash-vac-num" id="vacacionesTomadas">0</span>
-        <span class="dash-vac-label">Usados</span>
+        <span class="dash-vac-label">Semana usada</span>
       </div>
       <div class="dash-vac-stat">
         <span class="dash-vac-num highlight" id="vacacionesDisponibles">0</span>
-        <span class="dash-vac-label">Disponibles</span>
+        <span class="dash-vac-label">Semana disponible</span>
       </div>
     </div>
   </div>
@@ -118,15 +118,15 @@
         <div class="vac-disponibles-info">
           <div class="vac-disp-item">
             <span class="vac-disp-num" id="vacDispDisponibles">0</span>
-            <span class="vac-disp-label">Disponibles</span>
+            <span class="vac-disp-label">Disponible</span>
           </div>
           <div class="vac-disp-item">
             <span class="vac-disp-num" id="vacDispTomadas">0</span>
-            <span class="vac-disp-label">Tomados</span>
+            <span class="vac-disp-label">Usada</span>
           </div>
           <div class="vac-disp-item">
-            <span class="vac-disp-num" id="vacDispAcumuladas">0</span>
-            <span class="vac-disp-label">Acumulados</span>
+            <span class="vac-disp-num" id="vacDispAcumuladas">1</span>
+            <span class="vac-disp-label">Del año</span>
           </div>
           <div class="vac-disp-item">
             <span class="vac-disp-num" id="vacDispColectivas" style="color:#e74c3c;">0</span>
@@ -195,11 +195,8 @@ async function fetchSheetCSV(sheetName) {
 }
 
 async function calcularDisponibles() {
-  const fechaIngreso = parseFechaCO(empleado.ingreso);
   const hoy = new Date();
-  const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
-  const acumuladas = Math.floor((15 / 12) * meses);
-  const tomadas = parseInt(empleado.vacaciones || 0);
+  const usada = (parseInt(empleado.vacaciones || 0) || 0) >= 1;
   let colectivas = 0;
   try {
     const { rows } = await fetchSheetCSV('vacaciones_colectivas');
@@ -210,8 +207,13 @@ async function calcularDisponibles() {
       if (inicio <= hoy && hoy <= fin) colectivas += dias;
     }
   } catch(e) {}
-  const disponibles = Math.max(acumuladas - tomadas - colectivas, 0);
-  return { disponibles, tomadas, acumuladas, colectivas };
+  return {
+    usada: usada,
+    disponibles: usada ? 0 : 1,
+    tomadas: usada ? 1 : 0,
+    acumuladas: 1,
+    colectivas: colectivas
+  };
 }
 
 // =========================
@@ -236,26 +238,22 @@ document.getElementById('ingreso').innerText = fecha.toLocaleDateString('es-CO',
 // =========================
 // VACACIONES
 // =========================
-const hoyDash = new Date();
-const mesesDash = (hoyDash.getFullYear() - fecha.getFullYear()) * 12 + (hoyDash.getMonth() - fecha.getMonth());
-
-const acumuladasDash = Math.floor((15 / 12) * mesesDash);
-const tomadasDash = parseInt(empleado.vacaciones || 0);
-const disponiblesDash = Math.max(acumuladasDash - tomadasDash, 0);
+const tomadasDash = (parseInt(empleado.vacaciones || 0) || 0) >= 1 ? 1 : 0;
+const disponiblesDash = tomadasDash === 1 ? 0 : 1;
 
 document.getElementById('vacacionesTomadas').innerText = tomadasDash;
 document.getElementById('vacacionesDisponibles').innerText = disponiblesDash;
 
-const porcentajeDash = acumuladasDash > 0 ? (tomadasDash / acumuladasDash) * 100 : 0;
+const porcentajeDash = tomadasDash === 1 ? 100 : 0;
 document.getElementById("progreso").style.width = porcentajeDash + "%";
 
 (async function() {
   try {
     const d = await calcularDisponibles();
     document.getElementById('vacacionesDisponibles').innerText = d.disponibles;
-    document.getElementById('vacacionesTomadas').innerText = d.tomadas || tomadasDash;
+    document.getElementById('vacacionesTomadas').innerText = d.tomadas;
     document.getElementById('vacDispColectivas').innerText = d.colectivas || 0;
-    document.getElementById("progreso").style.width = (d.acumuladas > 0 ? (d.tomadas / d.acumuladas) * 100 : 0) + "%";
+    document.getElementById("progreso").style.width = (d.tomadas / d.acumuladas) * 100 + "%";
   } catch(e) {}
 })();
 
@@ -897,9 +895,11 @@ function abrirSolicitudVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'flex';
   resetBtnEnviar();
   cargarDisponiblesVacaciones();
-  var hoy = new Date().toISOString().split('T')[0];
+  var hoy = new Date();
+  var maxFecha = hoy.getFullYear() + '-12-31';
   document.getElementById('vacFechaInicio').value = '';
-  document.getElementById('vacFechaInicio').min = hoy;
+  document.getElementById('vacFechaInicio').min = hoy.toISOString().split('T')[0];
+  document.getElementById('vacFechaInicio').max = maxFecha;
   document.getElementById('vacDiasInfo').style.display = 'none';
   cargarHistorialSolicitudes();
 }
@@ -923,13 +923,22 @@ async function onSelectFechaInicio() {
   aviso.style.display = 'block';
   aviso.className = 'vac-dias-info';
   aviso.innerHTML = '<div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días — lunes a domingo</div>';
+  document.getElementById('btnEnviarSolicitud').disabled = false;
+
+  var anioActual = new Date().getFullYear();
+  if (dInicio.getFullYear() !== anioActual) {
+    aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fdeceb;color:#c0392b;font-size:13px;font-weight:600;">⚠️ Tu semana de vacaciones debe ser <b>dentro del año ' + anioActual + '</b>. Selecciona una semana de este año.</div>';
+    document.getElementById('btnEnviarSolicitud').disabled = true;
+    return;
+  }
 
   try {
     const d = await calcularDisponibles();
-    if (d.disponibles < 7) {
-      aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fdeceb;color:#c0392b;font-size:13px;font-weight:600;">⚠️ Solo te quedan <b>' + d.disponibles + ' días</b> de vacaciones. La semana requiere 7. El admin puede aprobarla o rechazarla.</div>';
+    if (d.usada) {
+      aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fdeceb;color:#c0392b;font-size:13px;font-weight:600;">⚠️ Ya usaste tu <b>semana de vacaciones</b> de este año. No puedes solicitar otra.</div>';
+      document.getElementById('btnEnviarSolicitud').disabled = true;
     } else {
-      aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#e9f9ef;color:#1e7a45;font-size:13px;font-weight:600;">✔ Tienes <b>' + d.disponibles + ' días</b> disponibles.</div>';
+      aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#e9f9ef;color:#1e7a45;font-size:13px;font-weight:600;">✔ Tienes tu <b>semana de vacaciones</b> disponible. ¡Puedes solicitarla!</div>';
     }
   } catch(e) {}
 }
@@ -942,15 +951,10 @@ async function cargarDisponiblesVacaciones() {
     document.getElementById('vacDispAcumuladas').innerText = d.acumuladas;
     document.getElementById('vacDispColectivas').innerText = d.colectivas;
   } catch(e) {
-    const fechaIngreso = parseFechaCO(empleado.ingreso);
-    const hoy = new Date();
-    const meses = (hoy.getFullYear() - fechaIngreso.getFullYear()) * 12 + (hoy.getMonth() - fechaIngreso.getMonth());
-    const acumuladas = Math.floor((15 / 12) * meses);
-    const tomadas = parseInt(empleado.vacaciones || 0);
-    const disponibles = Math.max(acumuladas - tomadas, 0);
-    document.getElementById('vacDispDisponibles').innerText = disponibles;
-    document.getElementById('vacDispTomadas').innerText = tomadas;
-    document.getElementById('vacDispAcumuladas').innerText = acumuladas;
+    const usada = (parseInt(empleado.vacaciones || 0) || 0) >= 1;
+    document.getElementById('vacDispDisponibles').innerText = usada ? 0 : 1;
+    document.getElementById('vacDispTomadas').innerText = usada ? 1 : 0;
+    document.getElementById('vacDispAcumuladas').innerText = 1;
     document.getElementById('vacDispColectivas').innerText = 0;
   }
 }
@@ -995,6 +999,17 @@ function enviarSolicitudVacaciones() {
   if (!motivo) { alert('Escribe el motivo de tu solicitud'); resetBtnEnviar(); return; }
 
   var dInicio = new Date(fechaInicio);
+  if (dInicio.getFullYear() !== new Date().getFullYear()) {
+    alert('Tu semana de vacaciones debe ser dentro del año actual.');
+    resetBtnEnviar();
+    return;
+  }
+  if ((parseInt(empleado.vacaciones || 0) || 0) >= 1) {
+    alert('Ya usaste tu semana de vacaciones de este año. No puedes solicitar otra.');
+    resetBtnEnviar();
+    return;
+  }
+
   var dFin = new Date(dInicio);
   dFin.setDate(dFin.getDate() + 6);
   var fechaInicioFmt = dInicio.toLocaleDateString('es-CO');
