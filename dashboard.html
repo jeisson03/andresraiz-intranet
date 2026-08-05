@@ -196,7 +196,8 @@ async function fetchSheetCSV(sheetName) {
 
 async function calcularDisponibles() {
   const hoy = new Date();
-  const usada = (parseInt(empleado.vacaciones || 0) || 0) >= 1;
+  const anioActual = hoy.getFullYear();
+  let usada = (parseInt(empleado.vacaciones || 0) || 0) >= 1;
   let colectivas = 0;
   try {
     const { rows } = await fetchSheetCSV('vacaciones_colectivas');
@@ -205,6 +206,17 @@ async function calcularDisponibles() {
       const fin = parseFechaCO(vc['Fecha Fin'] || vc['Fecha fin'] || '');
       const dias = parseInt(vc['Días'] || vc['Dias'] || 0) || 0;
       if (inicio <= hoy && hoy <= fin) colectivas += dias;
+    }
+  } catch(e) {}
+  try {
+    const ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
+    const { rows } = await fetchSheetCSV('solicitudes');
+    for (const s of rows) {
+      var mismaCed = ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
+      if (!mismaCed) continue;
+      if ((s.Estado || '') !== 'Aprobada') continue;
+      var fin = parseFechaCO(s['Fecha Fin'] || s['Fecha fin'] || '');
+      if (fin.getFullYear() === anioActual) { usada = true; break; }
     }
   } catch(e) {}
   return {
@@ -1061,8 +1073,8 @@ function enviarSolicitudVacaciones() {
     '&dias=7' +
     '&motivo=' + encodeURIComponent(motivo);
 
-  // Chequeo anti-duplicado: no crear otra solicitud mientras haya una pendiente
-  fetchSheetCSV('solicitudes').then(function(res) {
+  // Chequeo anti-duplicado: no crear otra solicitud mientras haya una pendiente o ya se usó la semana
+  fetchSheetCSV('solicitudes').then(async function(res) {
     var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
     var pendiente = res.rows.find(function(s) {
       var mismaCed = ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
@@ -1076,6 +1088,17 @@ function enviarSolicitudVacaciones() {
       msg.innerHTML = 'Ya tienes una solicitud pendiente de aprobación. Espera la respuesta del admin.';
       return;
     }
+    try {
+      const d = await calcularDisponibles();
+      if (d.usada) {
+        envioEnCurso = false;
+        resetBtnEnviar();
+        msg.style.display = 'block';
+        msg.className = 'vac-msg-envio vac-msg-error';
+        msg.innerHTML = 'Ya usaste tu semana de vacaciones de este año. No puedes solicitar otra.';
+        return;
+      }
+    } catch(e) {}
     realmenteEnviarSolicitud(url);
   }).catch(function() {
     realmenteEnviarSolicitud(url);
