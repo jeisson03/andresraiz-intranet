@@ -902,10 +902,31 @@ function abrirSolicitudVacaciones() {
   document.getElementById('vacFechaInicio').max = maxFecha;
   document.getElementById('vacDiasInfo').style.display = 'none';
   cargarHistorialSolicitudes();
+  obtenerSolicitudPendiente().then(function(pend) {
+    if (!pend) return;
+    var aviso = document.getElementById('vacDiasInfo');
+    aviso.style.display = 'block';
+    aviso.className = 'vac-dias-info';
+    aviso.innerHTML = '<div style="padding:12px;border-radius:8px;background:#fff3cd;color:#856404;font-size:13px;font-weight:600;border:1px solid #ffeeba;">⏳ Ya tienes una solicitud <b>pendiente de aprobación</b>. Podrás enviar otra cuando el admin la rechace.</div>';
+    document.getElementById('btnEnviarSolicitud').disabled = true;
+  });
 }
 
 function cerrarModalVacaciones() {
   document.getElementById('modalVacaciones').style.display = 'none';
+}
+
+async function obtenerSolicitudPendiente() {
+  try {
+    const { rows } = await fetchSheetCSV('solicitudes');
+    var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
+    return rows.find(function(s) {
+      var mismaCed = ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
+      return mismaCed && (s.Estado || '') === 'Pendiente';
+    }) || null;
+  } catch(e) {
+    return null;
+  }
 }
 
 async function onSelectFechaInicio() {
@@ -941,6 +962,12 @@ async function onSelectFechaInicio() {
       aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#e9f9ef;color:#1e7a45;font-size:13px;font-weight:600;">✔ Tienes tu <b>semana de vacaciones</b> disponible. ¡Puedes solicitarla!</div>';
     }
   } catch(e) {}
+
+  obtenerSolicitudPendiente().then(function(pend) {
+    if (!pend) return;
+    aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fff3cd;color:#856404;font-size:13px;font-weight:600;">⏳ Ya tienes una solicitud <b>pendiente de aprobación</b>. Espera la respuesta del admin.</div>';
+    document.getElementById('btnEnviarSolicitud').disabled = true;
+  });
 }
 
 async function cargarDisponiblesVacaciones() {
@@ -1024,20 +1051,19 @@ function enviarSolicitudVacaciones() {
     '&dias=7' +
     '&motivo=' + encodeURIComponent(motivo);
 
-  // Chequeo anti-duplicado: no crear otra solicitud pendiente para la misma semana
+  // Chequeo anti-duplicado: no crear otra solicitud mientras haya una pendiente
   fetchSheetCSV('solicitudes').then(function(res) {
     var ced = (empleado.cedula || '').toString().replace(/[^0-9]/g, '');
-    var duplicado = res.rows.find(function(s) {
+    var pendiente = res.rows.find(function(s) {
       var mismaCed = ((s['Cédula'] || s.Cedula || s.cedula) || '').toString().replace(/[^0-9]/g, '') === ced;
-      var mismoInicio = (s['Fecha Inicio'] || s['Fecha inicio'] || '').trim() === fechaInicioFmt;
-      return mismaCed && mismoInicio && (s.Estado || '') === 'Pendiente';
+      return mismaCed && (s.Estado || '') === 'Pendiente';
     });
-    if (duplicado) {
+    if (pendiente) {
       envioEnCurso = false;
       resetBtnEnviar();
       msg.style.display = 'block';
       msg.className = 'vac-msg-envio vac-msg-error';
-      msg.innerHTML = 'Ya tienes una solicitud pendiente para esa semana. Espera la aprobación.';
+      msg.innerHTML = 'Ya tienes una solicitud pendiente de aprobación. Espera la respuesta del admin.';
       return;
     }
     realmenteEnviarSolicitud(url);
