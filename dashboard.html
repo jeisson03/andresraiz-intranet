@@ -934,16 +934,18 @@ async function onSelectFechaInicio() {
   if (!inicio) return;
   var dInicio = new Date(inicio);
   var diaSemana = dInicio.getDay();
+  var aviso = document.getElementById('vacDiasInfo');
+  aviso.style.display = 'block';
+  aviso.className = 'vac-dias-info';
   if (diaSemana !== 1) {
     var diasHastaLunes = (8 - diaSemana) % 7;
     if (diasHastaLunes === 0) diasHastaLunes = 7;
     dInicio.setDate(dInicio.getDate() + diasHastaLunes);
     document.getElementById('vacFechaInicio').value = dInicio.toISOString().split('T')[0];
+    aviso.innerHTML = '<div style="padding:10px 12px;border-radius:8px;background:#fff3cd;color:#856404;font-size:13px;font-weight:600;border:1px solid #ffeeba;">⚠️ Las vacaciones se solicitan de <b>lunes a domingo</b>. Se ajustó tu semana al lunes <b>' + dInicio.toLocaleDateString('es-CO') + '</b>.</div>';
+  } else {
+    aviso.innerHTML = '<div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días — lunes a domingo</div>';
   }
-  var aviso = document.getElementById('vacDiasInfo');
-  aviso.style.display = 'block';
-  aviso.className = 'vac-dias-info';
-  aviso.innerHTML = '<div style="font-size:18px;font-weight:800;color:#5a4bd1;">7 días — lunes a domingo</div>';
   document.getElementById('btnEnviarSolicitud').disabled = false;
 
   var anioActual = new Date().getFullYear();
@@ -1026,6 +1028,11 @@ function enviarSolicitudVacaciones() {
   if (!motivo) { alert('Escribe el motivo de tu solicitud'); resetBtnEnviar(); return; }
 
   var dInicio = new Date(fechaInicio);
+  if (dInicio.getDay() !== 1) {
+    alert('Las vacaciones se solicitan de lunes a domingo. Elige el lunes de tu semana.');
+    resetBtnEnviar();
+    return;
+  }
   if (dInicio.getFullYear() !== new Date().getFullYear()) {
     alert('Tu semana de vacaciones debe ser dentro del año actual.');
     resetBtnEnviar();
