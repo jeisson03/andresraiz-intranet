@@ -901,6 +901,8 @@ function abrirSolicitudVacaciones() {
   document.getElementById('vacFechaInicio').min = hoy.toISOString().split('T')[0];
   document.getElementById('vacFechaInicio').max = maxFecha;
   document.getElementById('vacDiasInfo').style.display = 'none';
+  var msgEnvio = document.getElementById('vacMsgEnvio');
+  if (msgEnvio) msgEnvio.style.display = 'none';
   cargarHistorialSolicitudes();
   obtenerSolicitudPendiente().then(function(pend) {
     if (!pend) return;
@@ -948,6 +950,13 @@ async function onSelectFechaInicio() {
   }
   document.getElementById('btnEnviarSolicitud').disabled = false;
 
+  var pendiente = await obtenerSolicitudPendiente();
+  if (pendiente) {
+    aviso.innerHTML = '<div style="padding:12px;border-radius:8px;background:#fff3cd;color:#856404;font-size:13px;font-weight:600;border:1px solid #ffeeba;">⏳ Ya tienes una solicitud <b>pendiente de aprobación</b>. Podrás enviar otra cuando el admin la rechace.</div>';
+    document.getElementById('btnEnviarSolicitud').disabled = true;
+    return;
+  }
+
   var anioActual = new Date().getFullYear();
   if (dInicio.getFullYear() !== anioActual) {
     aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fdeceb;color:#c0392b;font-size:13px;font-weight:600;">⚠️ Tu semana de vacaciones debe ser <b>dentro del año ' + anioActual + '</b>. Selecciona una semana de este año.</div>';
@@ -964,12 +973,6 @@ async function onSelectFechaInicio() {
       aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#e9f9ef;color:#1e7a45;font-size:13px;font-weight:600;">✔ Tienes tu <b>semana de vacaciones</b> disponible. ¡Puedes solicitarla!</div>';
     }
   } catch(e) {}
-
-  obtenerSolicitudPendiente().then(function(pend) {
-    if (!pend) return;
-    aviso.innerHTML += '<div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:#fff3cd;color:#856404;font-size:13px;font-weight:600;">⏳ Ya tienes una solicitud <b>pendiente de aprobación</b>. Espera la respuesta del admin.</div>';
-    document.getElementById('btnEnviarSolicitud').disabled = true;
-  });
 }
 
 async function cargarDisponiblesVacaciones() {
